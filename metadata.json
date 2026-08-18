@@ -1,0 +1,6 @@
+{
+  "name": "Stage 101 Audience Lighting Controller",
+  "description": "Real-time lighting & visual effects controller for the 101 audience grid with NodeJS backend, audio synchronization, and WebSocket integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

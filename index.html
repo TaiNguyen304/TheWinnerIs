@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sân Khấu 101 Ô Khán Giả - Stage Display</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #02072a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Scene tỷ lệ 16:9 chuẩn 1920x1080 */
+    .scene-container {
+      position: relative;
+      width: min(100vw, 177.7777778vh);
+      height: min(100vh, 56.25vw);
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 43%, rgba(27, 31, 105, 0.72) 0%, rgba(7, 13, 59, 0.92) 46%, #02072a 100%);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Ánh sáng nền sân khấu */
+    .scene-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 10% 57%, rgba(67, 92, 255, 0.15), transparent 30%),
+        radial-gradient(ellipse at 90% 57%, rgba(115, 65, 255, 0.15), transparent 30%),
+        linear-gradient(180deg, rgba(34, 43, 115, 0.18), transparent 30%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Dàn đèn chiếu phía trên */
+    .top-lights {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .top-lights span {
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      width: 3px;
+      height: 130px;
+      transform-origin: bottom center;
+      border-radius: 2px;
+      background: linear-gradient(#ff39dc, #455cff);
+      box-shadow: 0 0 10px rgba(255, 65, 223, 0.85);
+      transition: opacity 0.5s ease;
+    }
+    .top-lights span:nth-child(1) { transform: translateX(-50%) rotate(-31deg); }
+    .top-lights span:nth-child(2) { transform: translateX(-50%) rotate(-22deg); }
+    .top-lights span:nth-child(3) { transform: translateX(-50%) rotate(-13deg); }
+    .top-lights span:nth-child(4) { transform: translateX(-50%) rotate(-4deg); }
+    .top-lights span:nth-child(5) {
+      transform: translateX(-50%) rotate(6deg);
+      background: linear-gradient(#4c5dff, #4c68ff);
+      box-shadow: 0 0 10px #4260ff;
+    }
+    .top-lights span:nth-child(6) {
+      transform: translateX(-50%) rotate(15deg);
+      background: linear-gradient(#405aff, #ea42ed);
+    }
+    .top-lights span:nth-child(7) {
+      transform: translateX(-50%) rotate(24deg);
+      background: linear-gradient(#405aff, #ea42ed);
+    }
+    .top-lights span:nth-child(8) {
+      transform: translateX(-50%) rotate(32deg);
+      background: linear-gradient(#405aff, #ea42ed);
+    }
+
+    /* Khung viền LED chữ V bao quanh khán đài */
+    .frame {
+      position: absolute;
+      z-index: 3;
+      left: 17px;
+      top: 153px;
+      width: 1886px;
+      height: 647px;
+      border: 7px solid #703dff;
+      border-radius: 30px;
+      clip-path: polygon(
+        0 0,
+        25.7% 0,
+        31.7% 19.6%,
+        35% 19.6%,
+        37% 18.8%,
+        50% 18.8%,
+        63% 18.8%,
+        65% 19.6%,
+        68.3% 19.6%,
+        74.3% 0,
+        100% 0,
+        92.2% 100%,
+        68.0% 100%,
+        58.0% 51.0%,
+        42.0% 51.0%,
+        32.0% 100%,
+        7.8% 100%
+      );
+      filter: drop-shadow(0 0 8px #6127ff) drop-shadow(0 0 20px rgba(105, 39, 255, 0.8));
+      pointer-events: none;
+      transition: all 0.4s ease;
+    }
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border: 2px solid rgba(196, 67, 255, 0.58);
+      clip-path: inherit;
+    }
+
+    /* Sàn trung tâm */
+    .floor {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 670px;
+      width: 700px;
+      height: 410px;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .floor .line {
+      position: absolute;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #4458ff, #ed49ef);
+      box-shadow: 0 0 10px rgba(87, 79, 255, 0.85);
+      transform-origin: left center;
+    }
+    .floor .l1 { left: 150px; top: 30px; width: 390px; transform: rotate(153deg); }
+    .floor .l2 { left: 75px; top: 80px; width: 340px; transform: rotate(160deg); }
+    .floor .l3 { left: 500px; top: 30px; width: 390px; transform: rotate(27deg); }
+    .floor .l4 { left: 595px; top: 80px; width: 340px; transform: rotate(20deg); }
+    .floor .l5 { left: 150px; top: 0; width: 270px; transform: rotate(170deg); }
+    .floor .l6 { left: 550px; top: 0; width: 270px; transform: rotate(10deg); }
+
+    /* Ánh sáng mờ hai cánh */
+    .glow {
+      position: absolute;
+      z-index: 1;
+      width: 520px;
+      height: 700px;
+      top: 120px;
+      filter: blur(50px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+    .glow.left {
+      left: -250px;
+      background: linear-gradient(90deg, transparent, #4b6cff, transparent);
+      transform: rotate(22deg);
+    }
+    .glow.right {
+      right: -250px;
+      background: linear-gradient(90deg, transparent, #873eff, transparent);
+      transform: rotate(-22deg);
+    }
+
+    /* Container chứa 101 ô */
+    #audience {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+    }
+
+    /* Từng ô trong 101 ô (Không có hình người, chỉ có ô sáng sân khấu) */
+    .seat {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 64px;
+      height: 94px;
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      background: linear-gradient(180deg, #ffffff 0%, #f5f6ff 72%, #dadbed 100%);
+      box-shadow:
+        0 0 8px rgba(255, 255, 255, 0.8),
+        inset 0 0 14px rgba(130, 140, 240, 0.25);
+      overflow: hidden;
+      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, transform 0.15s ease;
+      will-change: background, box-shadow, border-color;
+    }
+
+    /* Trạng thái tắt / màu đen */
+    .seat.is-black {
+      background: linear-gradient(180deg, #050818 0%, #02040d 100%) !important;
+      border-color: rgba(40, 50, 100, 0.4) !important;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.95), 0 0 2px rgba(10, 15, 40, 0.4) !important;
+    }
+
+    /* Trạng thái bật sáng rực rỡ khi sóng đèn đi qua */
+    .seat.is-active-lit {
+      background: linear-gradient(180deg, #ffffff 0%, #fff7d6 45%, #ffd269 100%) !important;
+      border-color: #ffffff !important;
+      box-shadow:
+        0 0 24px rgba(255, 230, 130, 1),
+        0 0 45px rgba(255, 180, 50, 0.8),
+        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
+      transform: translate(-50%, -50%) scale(1.05);
+      z-index: 10;
+    }
+
+    /* Trạng thái sáng neon tím/xanh chuẩn sân khấu hiệu ứng 3 & 4 */
+    .seat.is-cyan-lit {
+      background: linear-gradient(180deg, #ffffff 0%, #e0f8ff 45%, #6fe7ff 100%) !important;
+      border-color: #ffffff !important;
+      box-shadow:
+        0 0 24px rgba(111, 231, 255, 1),
+        0 0 45px rgba(0, 190, 255, 0.85),
+        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
+      transform: translate(-50%, -50%) scale(1.04);
+      z-index: 10;
+    }
+
+    /* Trạng thái sáng trắng đồng loạt */
+    .seat.is-white {
+      background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 70%, #dfe4f7 100%) !important;
+      border-color: #ffffff !important;
+      box-shadow:
+        0 0 16px rgba(255, 255, 255, 0.95),
+        0 0 32px rgba(180, 200, 255, 0.6),
+        inset 0 0 12px rgba(255, 255, 255, 0.8) !important;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Hiệu ứng tia sáng quét ngang / dọc ảo */
+    .scan-beam {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: linear-gradient(90deg, transparent 5%, rgba(0, 240, 255, 0.85) 30%, #ffffff 50%, rgba(0, 240, 255, 0.85) 70%, transparent 95%);
+      box-shadow: 0 0 35px rgba(0, 240, 255, 1), 0 0 60px rgba(0, 180, 255, 0.8);
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+      opacity: 0.9;
+      transform: translateY(-50%);
+    }
+
+    /* HUD hiển thị trạng thái góc trên bên phải */
+    .hud-overlay {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #cbd5e1;
+      background: rgba(4, 9, 36, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      border: 1px solid rgba(112, 61, 255, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      user-select: none;
+    }
+    .hud-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .hud-dot.disconnected {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    .hud-effect-badge {
+      font-weight: 700;
+      color: #ffd269;
+      letter-spacing: 0.5px;
+    }
+    .hud-timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    /* Banner kích hoạt âm thanh khi trình duyệt chặn autoplay */
+    .audio-unlock-modal {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border: 1px solid #818cf8;
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      animation: bounce 2s infinite ease-in-out;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-6px); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="scene-container" id="sceneContainer">
+    <!-- Ánh sáng mờ 2 cánh -->
+    <div class="glow left"></div>
+    <div class="glow right"></div>
+
+    <!-- Dàn đèn chiếu phía trên -->
+    <div class="top-lights">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Khung viền LED chữ V -->
+    <div class="frame" id="stageFrame"></div>
+
+    <!-- Container chứa đúng 101 ô -->
+    <div id="audience"></div>
+
+    <!-- Sàn trung tâm -->
+    <div class="floor">
+      <i class="line l1"></i><i class="line l2"></i>
+      <i class="line l3"></i><i class="line l4"></i>
+      <i class="line l5"></i><i class="line l6"></i>
+    </div>
+
+    <!-- 2 tia sáng ngang quét xuống cho Hiệu ứng 3 & 4 -->
+    <div class="scan-beam" id="scanBeam1"></div>
+    <div class="scan-beam" id="scanBeam2"></div>
+
+    <!-- HUD Thông tin trạng thái -->
+    <div class="hud-overlay" id="hudOverlay">
+      <span class="hud-dot" id="hudDot"></span>
+      <span id="hudStatus">Sẵn sàng (101 Ô)</span>
+      <span class="hud-effect-badge" id="hudEffectName"></span>
+      <span class="hud-timer" id="hudTimer"></span>
+    </div>
+  </div>
+
+  <!-- Audio Prompt nếu trình duyệt chặn phát tự động -->
+  <div class="audio-unlock-modal" id="audioUnlockModal" style="display: none;">
+    <span>🎵 Nhấn để bật âm thanh sân khấu</span>
+  </div>
+
+  <!-- Audio Elements -->
+  <audio id="audioOpening" src="/audio/Opening.mp3" preload="auto"></audio>
+  <audio id="audioContestant" src="/audio/Contestant.mp3" preload="auto"></audio>
+  <audio id="audioJudgeVote" src="/audio/Judge_Vote.mp3" preload="auto"></audio>
+  <audio id="audioResult" src="/audio/Result.mp3" preload="auto"></audio>
+
+  <script>
+    // --- KHỞI TẠO TỌA ĐỘ VÀ DOM CHO ĐÚNG 101 Ô ---
+    const audience = document.getElementById("audience");
+    const scanBeam1 = document.getElementById("scanBeam1");
+    const scanBeam2 = document.getElementById("scanBeam2");
+    const hudDot = document.getElementById("hudDot");
+    const hudStatus = document.getElementById("hudStatus");
+    const hudEffectName = document.getElementById("hudEffectName");
+    const hudTimer = document.getElementById("hudTimer");
+    const audioUnlockModal = document.getElementById("audioUnlockModal");
+
+    const audioElements = {
+      1: document.getElementById("audioOpening"),
+      2: document.getElementById("audioContestant"),
+      3: document.getElementById("audioJudgeVote"),
+      4: document.getElementById("audioResult")
+    };
+
+    // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
+    const rows = [
+      // Hàng 1: 5 + 5 = 10
+      { rowIndex: 0, y: 186, xs: [194, 277.5, 361, 444.5, 528], right: [1399, 1484, 1576, 1668, 1766] },
+      // Hàng 2: 5 + 5 = 10
+      { rowIndex: 1, y: 236, xs: [207, 301, 387, 485, 566], right: [1352, 1440, 1534, 1628, 1719] },
+      // Hàng 3: 5 + 5 = 10
+      { rowIndex: 2, y: 288, xs: [233, 333, 423, 517, 604], right: [1310, 1407, 1508, 1602, 1695] },
+      // Hàng 4: 7 + 7 = 14
+      { rowIndex: 3, y: 350, xs: [257, 363, 458, 551, 643, 791, 888], right: [1039, 1124, 1288, 1383, 1486, 1576, 1673] },
+      // Hàng 5: 8 + 8 = 16
+      { rowIndex: 4, y: 404, xs: [279, 386, 483, 579, 671, 759, 839, 921], right: [1007, 1104, 1196, 1285, 1374, 1461, 1545, 1649] },
+      // Hàng 6: 6 + 1(center) + 6 = 13
+      { rowIndex: 5, y: 466, xs: [311, 423, 530, 625, 727, 824], center: 972, right: [1109, 1220, 1323, 1418, 1518, 1621] },
+      // Hàng 7: 5 + 5 = 10
+      { rowIndex: 6, y: 536, xs: [342, 455, 570, 658, 774], right: [1163, 1274, 1375, 1484, 1591] },
+      // Hàng 8: 4 + 4 = 8
+      { rowIndex: 7, y: 610, xs: [373, 492, 608, 717], right: [1238, 1352, 1454, 1565] },
+      // Hàng 9: 3 + 3 = 6
+      { rowIndex: 8, y: 700, xs: [406, 531, 657], right: [1293, 1417, 1540] },
+      // Hàng 10: 2 + 2 = 4
+      { rowIndex: 9, y: 785, xs: [442, 577], right: [1367, 1504] }
+    ];
+
+    const seats = [];
+    const STAGE_CENTER_X = 960;
+    const STAGE_CENTER_Y = 466;
+    const MIN_Y = 186;
+    const MAX_Y = 785;
+
+    // Tạo các ô khán giả
+    rows.forEach(row => {
+      const allXsInRow = [...row.xs];
+      if (row.center !== undefined) allXsInRow.push(row.center);
+      allXsInRow.push(...row.right);
+
+      allXsInRow.forEach(x => {
+        const el = document.createElement("div");
+        el.className = "seat";
+        el.style.setProperty("--x", `${x}px`);
+        el.style.setProperty("--y", `${row.y}px`);
+        audience.appendChild(el);
+
+        // Tính khoảng cách và góc chéo từ tâm (dành cho Hiệu ứng 1 & 2)
+        const dx = Math.abs(x - STAGE_CENTER_X);
+        const dy = Math.abs(row.y - STAGE_CENTER_Y);
+        // Đường chéo: kết hợp độ lệch ngang và dọc
+        const diagDist = Math.sqrt(dx * dx + (dy * 1.5) * (dy * 1.5));
+        const side = x < STAGE_CENTER_X ? "left" : (x > STAGE_CENTER_X ? "right" : "center");
+
+        seats.push({
+          el,
+          x,
+          y: row.y,
+          rowIndex: row.rowIndex,
+          dx,
+          dy,
+          diagDist,
+          side
+        });
+      });
+    });
+
+    console.log(`Đã khởi tạo thành công ${seats.length} ô khán giả trên sân khấu.`);
+
+    // --- TỔNG HỢP ÂM THANH BẰNG WEB AUDIO API (FALLBACK NẾU CHƯA CÓ FILE MP3 HOẶC BỊ CHẶN) ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Bộ tạo nhạc sân khấu tổng hợp
+    let synthPlaying = false;
+    let synthIntervals = [];
+
+    function stopAllSynth() {
+      synthPlaying = false;
+      synthIntervals.forEach(id => clearInterval(id));
+      synthIntervals = [];
+    }
+
+    function playSynthesizedSoundtrack(effectNum, duration) {
+      try {
+        const ctx = getAudioContext();
+        stopAllSynth();
+        synthPlaying = true;
+
+        if (effectNum === 1 || effectNum === 2) {
+          // Opening / Contestant Fanfare & Suspense beat
+          let step = 0;
+          const tempo = effectNum === 1 ? 120 : 105;
+          const beatInterval = (60 / tempo) * 500;
+
+          const playBeat = () => {
+            if (!synthPlaying) return;
+            const now = ctx.currentTime;
+            
+            // Bass Kick / Hit
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(step % 4 === 0 ? 110 : 80, now);
+            osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+
+            // Synth brass chime
+            if (step % 2 === 0) {
+              const notes = [220, 277.18, 329.63, 440, 554.37, 659.25];
+              const note = notes[(Math.floor(step / 2)) % notes.length];
+              const synthOsc = ctx.createOscillator();
+              const synthGain = ctx.createGain();
+              synthOsc.type = "sawtooth";
+              synthOsc.frequency.setValueAtTime(note, now);
+              synthGain.gain.setValueAtTime(0.18, now);
+              synthGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+              synthOsc.connect(synthGain);
+              synthGain.connect(ctx.destination);
+              synthOsc.start(now);
+              synthOsc.stop(now + 0.6);
+            }
+            step++;
+          };
+
+          playBeat();
+          const timerId = setInterval(playBeat, beatInterval);
+          synthIntervals.push(timerId);
+
+        } else if (effectNum === 3) {
+          // Judge Vote Pulse / Ticking suspense
+          let tick = 0;
+          const tickInterval = 203; // ~13s / 64 ticks
+          const playTick = () => {
+            if (!synthPlaying) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(tick % 8 === 0 ? 880 : (tick % 4 === 0 ? 660 : 440), now);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.08);
+            tick++;
+          };
+          const timerId = setInterval(playTick, tickInterval);
+          synthIntervals.push(timerId);
+
+        } else if (effectNum === 4) {
+          // Result Dramatic Impact
+          const now = ctx.currentTime;
+          // Sub boom
+          const sub = ctx.createOscillator();
+          const subGain = ctx.createGain();
+          sub.frequency.setValueAtTime(140, now);
+          sub.frequency.exponentialRampToValueAtTime(25, now + 1.2);
+          subGain.gain.setValueAtTime(0.6, now);
+          subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          sub.connect(subGain);
+          subGain.connect(ctx.destination);
+          sub.start(now);
+          sub.stop(now + 1.2);
+
+          // Fast riser roll
+          let r = 0;
+          const rollId = setInterval(() => {
+            if (!synthPlaying || r > 20) return;
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(300 + r * 35, t);
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.06);
+            r++;
+          }, 60);
+          synthIntervals.push(rollId);
+        }
+      } catch (err) {
+        console.warn("Synthesizer error:", err);
+      }
+    }
+
+    function playAudio(effectNum, duration) {
+      stopAllAudio();
+      const audioEl = audioElements[effectNum];
+      let playedFile = false;
+
+      if (audioEl) {
+        audioEl.currentTime = 0;
+        const playPromise = audioEl.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            playedFile = true;
+            audioUnlockModal.style.display = "none";
+          }).catch(err => {
+            console.warn(`Không thể phát file âm thanh (mã hiệu ứng: ${effectNum}), chuyển sang âm thanh tổng hợp:`, err);
+            audioUnlockModal.style.display = "flex";
+            playSynthesizedSoundtrack(effectNum, duration);
+          });
+        }
+      } else {
+        playSynthesizedSoundtrack(effectNum, duration);
+      }
+    }
+
+    function stopAllAudio() {
+      stopAllSynth();
+      Object.values(audioElements).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
+    }
+
+    // Bấm vào modal để mở khóa AudioContext nếu trình duyệt yêu cầu tương tác
+    audioUnlockModal.addEventListener("click", () => {
+      getAudioContext();
+      audioUnlockModal.style.display = "none";
+      if (currentEffectState.effect) {
+        playAudio(currentEffectState.effect, currentEffectState.duration);
+      }
+    });
+
+    // --- ANIMATION ENGINE CHÍNH CHO 4 HIỆU ỨNG ---
+    let currentAnimationId = null;
+    let effectStartTime = 0;
+    let currentEffectState = { effect: null, duration: 0, loopDuration: 0 };
+
+    function resetAllSeats(mode = "white") {
+      if (currentAnimationId) {
+        cancelAnimationFrame(currentAnimationId);
+        currentAnimationId = null;
+      }
+      scanBeam1.style.display = "none";
+      scanBeam2.style.display = "none";
+
+      seats.forEach(s => {
+        s.el.className = "seat";
+        if (mode === "white") {
+          s.el.classList.add("is-white");
+        } else if (mode === "black") {
+          s.el.classList.add("is-black");
+        }
+      });
+
+      hudEffectName.textContent = "";
+      hudTimer.textContent = "";
+      hudStatus.textContent = mode === "white" ? "Sẵn sàng (101 Ô Trắng)" : "Chế độ Tắt (Đen)";
+    }
+
+    // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s):
+    // 101 ô đổi sang màu đen, đèn bật sáng từ tâm ra 2 bên trái phải theo các đường chéo.
+    // Đến đúng giây thứ 26 (hoặc 40), 101 ô đồng loạt trở về màu trắng.
+    function runDiagonalSpreadEffect(effectNum, totalDuration) {
+      resetAllSeats("black");
+      effectStartTime = performance.now();
+      currentEffectState = { effect: effectNum, duration: totalDuration };
+
+      const effectNames = {
+        1: "Hiệu ứng 1 (Opening - 26s)",
+        2: "Hiệu ứng 2 (Contestant - 40s)"
+      };
+      hudEffectName.textContent = effectNames[effectNum];
+
+      // Tốc độ chu kỳ lan tỏa sóng chéo
+      const wavePeriod = effectNum === 1 ? 2.6 : 3.2; // chu kỳ mỗi đợt sóng chéo
+      const maxDiag = 900; // khoảng cách chéo tối đa từ tâm
+
+      function animate() {
+        const now = performance.now();
+        const elapsed = (now - effectStartTime) / 1000;
+
+        if (elapsed >= totalDuration) {
+          // ĐẾN ĐÚNG GIÂY THỨ 26 (HOẶC 40), 101 Ô ĐỒNG LOẠT TRỞ VỀ MÀU TRẮNG
+          seats.forEach(s => {
+            s.el.className = "seat is-white";
+          });
+          hudStatus.textContent = `Hoàn thành (${totalDuration}s) -> 101 Ô Trắng`;
+          hudTimer.textContent = `${totalDuration.toFixed(1)}s / ${totalDuration}s`;
+          currentAnimationId = null;
+          return;
+        }
+
+        hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s`;
+        hudStatus.textContent = `Đang chạy sóng chéo từ tâm`;
+
+        // Tính vị trí sóng lan tỏa từ tâm ra 2 bên theo đường chéo
+        // Cho phép 2-3 đợt sóng chéo gối đầu liên tục tạo hiệu ứng sân khấu hoành tráng
+        const cycleProgress = (elapsed % wavePeriod) / wavePeriod;
+        const currentFront = cycleProgress * (maxDiag + 200);
+
+        seats.forEach(s => {
+          // Khoảng cách từ vị trí sóng hiện tại tới ô
+          const distToWave = Math.abs(s.diagDist - currentFront);
+          // Đợt sóng phụ thứ 2
+          const wave2Front = (((elapsed + wavePeriod * 0.5) % wavePeriod) / wavePeriod) * (maxDiag + 200);
+          const distToWave2 = Math.abs(s.diagDist - wave2Front);
+
+          // Nếu nằm trong dải sáng của sóng chéo -> Bật sáng rực rỡ
+          if (distToWave < 120 || distToWave2 < 100) {
+            s.el.className = "seat is-active-lit";
+          } else {
+            // Giữ màu đen theo yêu cầu
+            s.el.className = "seat is-black";
+          }
+        });
+
+        currentAnimationId = requestAnimationFrame(animate);
+      }
+
+      currentAnimationId = requestAnimationFrame(animate);
+    }
+
+    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s):
+    // 101 ô đổi sang màu đen. Từ hàng trên cùng, tạo ra 2 đường ngang sáng đèn.
+    // 2 đường ngang này di chuyển từ trên xuống dưới theo vòng lặp.
+    function runHorizontalScanEffect(effectNum, totalDuration, loopDuration) {
+      resetAllSeats("black");
+      effectStartTime = performance.now();
+      currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration };
+
+      scanBeam1.style.display = "block";
+      scanBeam2.style.display = "block";
+
+      const effectNames = {
+        3: `Hiệu ứng 3 (Judge Vote - ${totalDuration}s, Lặp ${loopDuration}s)`,
+        4: `Hiệu ứng 4 (Result - ${totalDuration}s, Lặp ${loopDuration}s)`
+      };
+      hudEffectName.textContent = effectNames[effectNum];
+
+      const totalLoops = Math.round(totalDuration / loopDuration); // 4 vòng lặp
+
+      function animate() {
+        const now = performance.now();
+        const elapsed = (now - effectStartTime) / 1000;
+
+        if (elapsed >= totalDuration) {
+          scanBeam1.style.display = "none";
+          scanBeam2.style.display = "none";
+          seats.forEach(s => {
+            s.el.className = "seat is-white";
+          });
+          hudStatus.textContent = `Hoàn tất (${totalDuration}s) -> 101 Ô Trắng`;
+          hudTimer.textContent = `${totalDuration.toFixed(1)}s / ${totalDuration}s`;
+          currentAnimationId = null;
+          return;
+        }
+
+        const currentLoopNum = Math.min(totalLoops, Math.floor(elapsed / loopDuration) + 1);
+        const loopElapsed = elapsed % loopDuration;
+        const progress = loopElapsed / loopDuration; // 0 -> 1
+
+        hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s (Vòng ${currentLoopNum}/${totalLoops})`;
+        hudStatus.textContent = `2 Đường ngang quét từ trên xuống`;
+
+        // Tính tọa độ Y của 2 đường ngang di chuyển từ đỉnh (MIN_Y) xuống đáy (MAX_Y)
+        // Đường 1 đi trước, đường 2 lệch 0.25 chu kỳ để tạo cặp 2 đường quét song song
+        const beam1Progress = progress;
+        const beam2Progress = (progress + 0.35) % 1;
+
+        const y1 = MIN_Y + beam1Progress * (MAX_Y - MIN_Y + 120);
+        const y2 = MIN_Y + beam2Progress * (MAX_Y - MIN_Y + 120);
+
+        scanBeam1.style.top = `${y1}px`;
+        scanBeam2.style.top = `${y2}px`;
+
+        // Cập nhật trạng thái từng ô
+        seats.forEach(s => {
+          const dist1 = Math.abs(s.y - y1);
+          const dist2 = Math.abs(s.y - y2);
+
+          if (dist1 < 55 || dist2 < 55) {
+            s.el.className = "seat is-cyan-lit";
+          } else if (dist1 < 100 || dist2 < 100) {
+            s.el.className = "seat is-active-lit";
+          } else {
+            s.el.className = "seat is-black";
+          }
+        });
+
+        currentAnimationId = requestAnimationFrame(animate);
+      }
+
+      currentAnimationId = requestAnimationFrame(animate);
+    }
+
+    // Bộ xử lý kích hoạt hiệu ứng thống nhất
+    function triggerEffect(effectNum) {
+      console.log(`[Stage] Nhận lệnh kích hoạt Hiệu ứng: ${effectNum}`);
+      if (effectNum === 1) {
+        playAudio(1, 26);
+        runDiagonalSpreadEffect(1, 26);
+      } else if (effectNum === 2) {
+        playAudio(2, 40);
+        runDiagonalSpreadEffect(2, 40);
+      } else if (effectNum === 3) {
+        playAudio(3, 13);
+        runHorizontalScanEffect(3, 13, 3.25);
+      } else if (effectNum === 4) {
+        playAudio(4, 5);
+        runHorizontalScanEffect(4, 5, 1.25);
+      }
+    }
+
+    function stopEffect() {
+      stopAllAudio();
+      resetAllSeats("white");
+    }
+
+    // --- ĐỒNG BỘ WEBSOCKET + BROADCASTCHANNEL VỚI CONTROLLER.HTML ---
+    // 1. BroadcastChannel: Đồng bộ tức thì giữa các tab cùng trình duyệt (0ms lag)
+    const bc = new BroadcastChannel("stage101_channel");
+    bc.onmessage = (e) => {
+      const data = e.data;
+      if (!data) return;
+      if (data.type === "TRIGGER_EFFECT") {
+        triggerEffect(Number(data.effect));
+      } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
+        stopEffect();
+      }
+    };
+
+    // 2. WebSocket: Đồng bộ qua Server NodeJS / OnRender từ các máy khác nhau
+    let ws = null;
+    function connectWebSocket() {
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${location.host}/ws`;
+
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log("[WS] Đã kết nối tới Server NodeJS");
+        hudDot.className = "hud-dot";
+        hudStatus.textContent = "Sẵn sàng (Đã kết nối Server)";
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "EFFECT_TRIGGERED" && msg.state) {
+            triggerEffect(Number(msg.state.effect));
+          } else if (msg.type === "EFFECT_STOPPED" || msg.type === "RESET") {
+            stopEffect();
+          } else if (msg.type === "STATE_SYNC" && msg.state && msg.state.action === "start") {
+            // Đồng bộ nếu tải lại trang khi hiệu ứng đang chạy
+            const elapsedSinceStart = (Date.now() - msg.state.startTime) / 1000;
+            if (elapsedSinceStart < msg.state.duration) {
+              triggerEffect(Number(msg.state.effect));
+            }
+          }
+        } catch (err) {
+          console.error("Lỗi parse WS:", err);
+        }
+      };
+
+      ws.onclose = () => {
+        console.warn("[WS] Mất kết nối, đang thử kết nối lại sau 2s...");
+        hudDot.className = "hud-dot disconnected";
+        hudStatus.textContent = "Mất kết nối server (Đang thử lại)";
+        setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onerror = (err) => {
+        hudDot.className = "hud-dot disconnected";
+      };
+    }
+
+    connectWebSocket();
+
+    // Mặc định khởi tạo 101 ô màu trắng
+    resetAllSeats("white");
+  </script>
+</body>
+</html>
