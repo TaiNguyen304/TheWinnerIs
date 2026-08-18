@@ -437,7 +437,26 @@
       </div>
 
       <button class="btn-open-stage" id="btnOpenStageTab" onclick="openStageWindow()">
-        🖥️ Mở Màn Hình Sân Khấu (Tab Mới)
+        🖥️ Mở Sân Khấu (index.html)
+      </button>
+    </div>
+  </div>
+
+  <!-- Thanh Hiển Thị & Chia Sẻ Link Trực Tuyến OnRender -->
+  <div style="background: #111738; border: 2px solid #3b427a; border-radius: 16px; padding: 14px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 13px; color: #38bdf8;">🔗 LIÊN KẾT TRỰC TUYẾN ONRENDER:</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px;">
+        <span>Màn hình Sân Khấu: <a id="linkStageDisplay" href="/index.html" target="_blank" style="color: #ffd269; text-decoration: underline;">https://thewinneris.onrender.com/index.html</a></span>
+        <span>Bảng Điều Khiển: <a id="linkController" href="/Controller.html" style="color: #a855f7; text-decoration: underline;">https://thewinneris.onrender.com/Controller.html</a></span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-aux" onclick="copyLink('stage')" style="padding: 8px 14px; font-size: 12px;">
+        📋 Sao chép Link Sân Khấu
+      </button>
+      <button class="btn-aux" onclick="copyLink('controller')" style="padding: 8px 14px; font-size: 12px;">
+        📋 Sao chép Link Điều Khiển
       </button>
     </div>
   </div>
@@ -647,6 +666,30 @@
     let activeRunningEffect = null;
     let timerInterval = null;
     let effectStartTimestamp = 0;
+    let serverTimeOffset = 0;
+    let lastPingLatency = 0;
+    let onlineClientsCount = 1;
+
+    function getServerNow() {
+      return Date.now() + serverTimeOffset;
+    }
+
+    function syncServerClock(wsInstance) {
+      if (wsInstance && wsInstance.readyState === WebSocket.OPEN) {
+        const pingTime = Date.now();
+        wsInstance.send(JSON.stringify({ type: "TIME_SYNC", clientPingTime: pingTime }));
+      }
+    }
+
+    function updateConnectionBadge(connected = true) {
+      if (connected) {
+        statusDot.className = "status-dot";
+        connectionText.textContent = `Online (${onlineClientsCount} thiết bị) | Ping: ${lastPingLatency}ms`;
+      } else {
+        statusDot.className = "status-dot disconnected";
+        connectionText.textContent = "Mất kết nối server (Đang thử lại)";
+      }
+    }
 
     // 1. BroadcastChannel: Đồng bộ tức thì giữa các tab cùng trình duyệt
     const bc = new BroadcastChannel("stage101_channel");
@@ -654,14 +697,17 @@
       const data = e.data;
       if (!data) return;
       if (data.type === "TRIGGER_EFFECT") {
-        updateUIOnTrigger(Number(data.effect));
+        updateUIOnTrigger(Number(data.effect), data.serverStartTime);
       } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
         updateUIOnStop();
       }
     };
 
-    // 2. WebSocket kết nối Server NodeJS
+    // 2. WebSocket kết nối Server NodeJS & Đồng bộ toàn cầu
     let ws = null;
+    let clockSyncTimer = null;
+    let fallbackPollTimer = null;
+
     function initWebSocket() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}/ws`;
@@ -669,21 +715,44 @@
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        statusDot.className = "status-dot";
-        connectionText.textContent = "Đã kết nối Server NodeJS";
+        updateConnectionBadge(true);
+        syncServerClock(ws);
+
+        if (clockSyncTimer) clearInterval(clockSyncTimer);
+        clockSyncTimer = setInterval(() => syncServerClock(ws), 10000);
+
+        if (fallbackPollTimer) {
+          clearInterval(fallbackPollTimer);
+          fallbackPollTimer = null;
+        }
       };
 
       ws.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
+
+          if (msg.type === "TIME_SYNC_RESPONSE") {
+            const now = Date.now();
+            const rtt = now - msg.clientPingTime;
+            lastPingLatency = Math.round(rtt / 2);
+            serverTimeOffset = msg.serverTime - (msg.clientPingTime + lastPingLatency);
+            updateConnectionBadge(true);
+            return;
+          }
+
+          if (msg.clientsCount !== undefined) {
+            onlineClientsCount = msg.clientsCount;
+            updateConnectionBadge(true);
+          }
+
           if (msg.type === "EFFECT_TRIGGERED" && msg.state) {
-            updateUIOnTrigger(Number(msg.state.effect));
+            updateUIOnTrigger(Number(msg.state.effect), msg.state.serverStartTime);
           } else if (msg.type === "EFFECT_STOPPED" || msg.type === "RESET") {
             updateUIOnStop();
           } else if (msg.type === "STATE_SYNC" && msg.state && msg.state.action === "start") {
-            const elapsed = (Date.now() - msg.state.startTime) / 1000;
+            const elapsed = (getServerNow() - msg.state.serverStartTime) / 1000;
             if (elapsed < msg.state.duration) {
-              updateUIOnTrigger(Number(msg.state.effect), msg.state.startTime);
+              updateUIOnTrigger(Number(msg.state.effect), msg.state.serverStartTime);
             }
           }
         } catch (err) {
@@ -692,14 +761,39 @@
       };
 
       ws.onclose = () => {
-        statusDot.className = "status-dot disconnected";
-        connectionText.textContent = "Mất kết nối server (Đang thử lại)";
-        setTimeout(initWebSocket, 2000);
+        updateConnectionBadge(false);
+        if (!fallbackPollTimer) {
+          fallbackPollTimer = setInterval(pollServerState, 1500);
+        }
+        setTimeout(initWebSocket, 2500);
       };
 
       ws.onerror = () => {
-        statusDot.className = "status-dot disconnected";
+        updateConnectionBadge(false);
       };
+    }
+
+    async function pollServerState() {
+      try {
+        const res = await fetch("/api/state");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.serverTime) {
+            serverTimeOffset = data.serverTime - Date.now();
+          }
+          if (data.clientsCount !== undefined) {
+            onlineClientsCount = data.clientsCount;
+          }
+          if (data.state && data.state.action === "start") {
+            const elapsed = (getServerNow() - data.state.serverStartTime) / 1000;
+            if (elapsed < data.state.duration && activeRunningEffect !== data.state.effect) {
+              updateUIOnTrigger(Number(data.state.effect), data.state.serverStartTime);
+            }
+          } else if (data.state && (data.state.action === "stop" || data.state.action === "reset") && activeRunningEffect !== null) {
+            updateUIOnStop();
+          }
+        }
+      } catch (e) {}
     }
 
     initWebSocket();
@@ -744,7 +838,7 @@
         }
       });
 
-      effectStartTimestamp = explicitStartTime || performance.now();
+      effectStartTimestamp = explicitStartTime || getServerNow();
       liveTag.textContent = `ĐANG CHẠY: ${meta.name.toUpperCase()}`;
       liveTag.style.color = "#ffd269";
       currentEffectLabel.textContent = `Hiệu ứng: ${meta.name}`;
@@ -755,7 +849,7 @@
       playControllerAudio(effectNum);
 
       timerInterval = setInterval(() => {
-        const now = performance.now();
+        const now = getServerNow();
         const elapsed = (now - effectStartTimestamp) / 1000;
         const total = meta.duration;
 
@@ -849,6 +943,28 @@
       }
 
       fetch("/api/reset", { method: "POST" }).catch(() => {});
+    }
+
+    // Cập nhật đường link hiển thị theo domain thực tế (hỗ trợ thewinneris.onrender.com)
+    const baseOrigin = window.location.origin;
+    const linkStageDisplay = document.getElementById("linkStageDisplay");
+    const linkController = document.getElementById("linkController");
+    if (linkStageDisplay && linkController) {
+      const stageUrl = `${baseOrigin}/index.html`;
+      const ctrlUrl = `${baseOrigin}/Controller.html`;
+      linkStageDisplay.href = stageUrl;
+      linkStageDisplay.textContent = stageUrl;
+      linkController.href = ctrlUrl;
+      linkController.textContent = ctrlUrl;
+    }
+
+    function copyLink(type) {
+      const url = type === "stage" ? `${baseOrigin}/index.html` : `${baseOrigin}/Controller.html`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Đã sao chép link: ${url}`);
+      }).catch(() => {
+        prompt("Sao chép đường link:", url);
+      });
     }
 
     // Phím tắt bàn phím

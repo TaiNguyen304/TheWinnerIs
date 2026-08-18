@@ -354,12 +354,15 @@
     <div class="scan-beam" id="scanBeam1"></div>
     <div class="scan-beam" id="scanBeam2"></div>
 
-    <!-- HUD Thông tin trạng thái -->
+    <!-- HUD Thông tin trạng thái & Nút liên kết Controller -->
     <div class="hud-overlay" id="hudOverlay">
       <span class="hud-dot" id="hudDot"></span>
       <span id="hudStatus">Sẵn sàng (101 Ô)</span>
       <span class="hud-effect-badge" id="hudEffectName"></span>
       <span class="hud-timer" id="hudTimer"></span>
+      <a href="/Controller.html" target="_blank" style="color: #c084fc; text-decoration: none; font-weight: 700; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; margin-left: 4px; display: inline-flex; align-items: center; gap: 4px;">
+        🎛️ Controller
+      </a>
     </div>
   </div>
 
@@ -633,10 +636,25 @@
       }
     });
 
-    // --- ANIMATION ENGINE CHÍNH CHO 4 HIỆU ỨNG ---
+    // --- ĐỒNG BỘ THỜI GIAN CHUẨN TOÀN CẦU (NTP SERVER OFFSET CLOCK SYNC) ---
+    let serverTimeOffset = 0;
+    let lastPingLatency = 0;
+    let onlineClientsCount = 1;
+
+    function getServerNow() {
+      return Date.now() + serverTimeOffset;
+    }
+
+    function syncServerClock(wsInstance) {
+      if (wsInstance && wsInstance.readyState === WebSocket.OPEN) {
+        const pingTime = Date.now();
+        wsInstance.send(JSON.stringify({ type: "TIME_SYNC", clientPingTime: pingTime }));
+      }
+    }
+
+    // --- ANIMATION ENGINE CHÍNH CHO 4 HIỆU ỨNG (CHUẨN TỌA ĐỘ VÀ THỜI GIAN SERVER) ---
     let currentAnimationId = null;
-    let effectStartTime = 0;
-    let currentEffectState = { effect: null, duration: 0, loopDuration: 0 };
+    let currentEffectState = { effect: null, duration: 0, loopDuration: 0, serverStartTime: 0 };
 
     function resetAllSeats(mode = "white") {
       if (currentAnimationId) {
@@ -660,13 +678,11 @@
       hudStatus.textContent = mode === "white" ? "Sẵn sàng (101 Ô Trắng)" : "Chế độ Tắt (Đen)";
     }
 
-    // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s):
-    // 101 ô đổi sang màu đen, đèn bật sáng từ tâm ra 2 bên trái phải theo các đường chéo.
-    // Đến đúng giây thứ 26 (hoặc 40), 101 ô đồng loạt trở về màu trắng.
-    function runDiagonalSpreadEffect(effectNum, totalDuration) {
+    // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s): Sóng chéo lan tỏa từ tâm ra 2 bên
+    function runDiagonalSpreadEffect(effectNum, totalDuration, explicitServerStartTime = null) {
       resetAllSeats("black");
-      effectStartTime = performance.now();
-      currentEffectState = { effect: effectNum, duration: totalDuration };
+      const startTimestamp = explicitServerStartTime || getServerNow();
+      currentEffectState = { effect: effectNum, duration: totalDuration, serverStartTime: startTimestamp };
 
       const effectNames = {
         1: "Hiệu ứng 1 (Opening - 26s)",
@@ -674,16 +690,24 @@
       };
       hudEffectName.textContent = effectNames[effectNum];
 
-      // Tốc độ chu kỳ lan tỏa sóng chéo
-      const wavePeriod = effectNum === 1 ? 2.6 : 3.2; // chu kỳ mỗi đợt sóng chéo
-      const maxDiag = 900; // khoảng cách chéo tối đa từ tâm
+      const wavePeriod = effectNum === 1 ? 2.6 : 3.2;
+      const maxDiag = 900;
+
+      // Đồng bộ thời gian phát audio với độ trôi
+      const audioEl = audioElements[effectNum];
+      if (audioEl) {
+        const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
+        if (currentElapsed < totalDuration) {
+          audioEl.currentTime = currentElapsed;
+          audioEl.play().catch(() => {});
+        }
+      }
 
       function animate() {
-        const now = performance.now();
-        const elapsed = (now - effectStartTime) / 1000;
+        const now = getServerNow();
+        const elapsed = (now - startTimestamp) / 1000;
 
         if (elapsed >= totalDuration) {
-          // ĐẾN ĐÚNG GIÂY THỨ 26 (HOẶC 40), 101 Ô ĐỒNG LOẠT TRỞ VỀ MÀU TRẮNG
           seats.forEach(s => {
             s.el.className = "seat is-white";
           });
@@ -693,26 +717,26 @@
           return;
         }
 
+        if (elapsed < 0) {
+          // Trường hợp máy khách chạy sớm hơn một chút, chờ đúng thời điểm server
+          currentAnimationId = requestAnimationFrame(animate);
+          return;
+        }
+
         hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s`;
         hudStatus.textContent = `Đang chạy sóng chéo từ tâm`;
 
-        // Tính vị trí sóng lan tỏa từ tâm ra 2 bên theo đường chéo
-        // Cho phép 2-3 đợt sóng chéo gối đầu liên tục tạo hiệu ứng sân khấu hoành tráng
         const cycleProgress = (elapsed % wavePeriod) / wavePeriod;
         const currentFront = cycleProgress * (maxDiag + 200);
 
         seats.forEach(s => {
-          // Khoảng cách từ vị trí sóng hiện tại tới ô
           const distToWave = Math.abs(s.diagDist - currentFront);
-          // Đợt sóng phụ thứ 2
           const wave2Front = (((elapsed + wavePeriod * 0.5) % wavePeriod) / wavePeriod) * (maxDiag + 200);
           const distToWave2 = Math.abs(s.diagDist - wave2Front);
 
-          // Nếu nằm trong dải sáng của sóng chéo -> Bật sáng rực rỡ
           if (distToWave < 120 || distToWave2 < 100) {
             s.el.className = "seat is-active-lit";
           } else {
-            // Giữ màu đen theo yêu cầu
             s.el.className = "seat is-black";
           }
         });
@@ -723,13 +747,11 @@
       currentAnimationId = requestAnimationFrame(animate);
     }
 
-    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s):
-    // 101 ô đổi sang màu đen. Từ hàng trên cùng, tạo ra 2 đường ngang sáng đèn.
-    // 2 đường ngang này di chuyển từ trên xuống dưới theo vòng lặp.
-    function runHorizontalScanEffect(effectNum, totalDuration, loopDuration) {
+    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s): 2 đường quét ngang
+    function runHorizontalScanEffect(effectNum, totalDuration, loopDuration, explicitServerStartTime = null) {
       resetAllSeats("black");
-      effectStartTime = performance.now();
-      currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration };
+      const startTimestamp = explicitServerStartTime || getServerNow();
+      currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration, serverStartTime: startTimestamp };
 
       scanBeam1.style.display = "block";
       scanBeam2.style.display = "block";
@@ -740,11 +762,20 @@
       };
       hudEffectName.textContent = effectNames[effectNum];
 
-      const totalLoops = Math.round(totalDuration / loopDuration); // 4 vòng lặp
+      const totalLoops = Math.round(totalDuration / loopDuration);
+
+      const audioEl = audioElements[effectNum];
+      if (audioEl) {
+        const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
+        if (currentElapsed < totalDuration) {
+          audioEl.currentTime = currentElapsed;
+          audioEl.play().catch(() => {});
+        }
+      }
 
       function animate() {
-        const now = performance.now();
-        const elapsed = (now - effectStartTime) / 1000;
+        const now = getServerNow();
+        const elapsed = (now - startTimestamp) / 1000;
 
         if (elapsed >= totalDuration) {
           scanBeam1.style.display = "none";
@@ -758,15 +789,18 @@
           return;
         }
 
+        if (elapsed < 0) {
+          currentAnimationId = requestAnimationFrame(animate);
+          return;
+        }
+
         const currentLoopNum = Math.min(totalLoops, Math.floor(elapsed / loopDuration) + 1);
         const loopElapsed = elapsed % loopDuration;
-        const progress = loopElapsed / loopDuration; // 0 -> 1
+        const progress = loopElapsed / loopDuration;
 
         hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s (Vòng ${currentLoopNum}/${totalLoops})`;
         hudStatus.textContent = `2 Đường ngang quét từ trên xuống`;
 
-        // Tính tọa độ Y của 2 đường ngang di chuyển từ đỉnh (MIN_Y) xuống đáy (MAX_Y)
-        // Đường 1 đi trước, đường 2 lệch 0.25 chu kỳ để tạo cặp 2 đường quét song song
         const beam1Progress = progress;
         const beam2Progress = (progress + 0.35) % 1;
 
@@ -776,7 +810,6 @@
         scanBeam1.style.top = `${y1}px`;
         scanBeam2.style.top = `${y2}px`;
 
-        // Cập nhật trạng thái từng ô
         seats.forEach(s => {
           const dist1 = Math.abs(s.y - y1);
           const dist2 = Math.abs(s.y - y2);
@@ -796,44 +829,45 @@
       currentAnimationId = requestAnimationFrame(animate);
     }
 
-    // Bộ xử lý kích hoạt hiệu ứng thống nhất
-    function triggerEffect(effectNum) {
-      console.log(`[Stage] Nhận lệnh kích hoạt Hiệu ứng: ${effectNum}`);
+    // Bộ kích hoạt hiệu ứng đồng bộ tuyệt đối
+    function triggerEffect(effectNum, explicitServerStartTime = null) {
+      console.log(`[Stage] Đồng bộ Hiệu ứng: ${effectNum} (ServerTime: ${explicitServerStartTime || getServerNow()})`);
+      playAudio(effectNum, EFFECT_CONFIGS_DURATIONS[effectNum]);
+
       if (effectNum === 1) {
-        playAudio(1, 26);
-        runDiagonalSpreadEffect(1, 26);
+        runDiagonalSpreadEffect(1, 26, explicitServerStartTime);
       } else if (effectNum === 2) {
-        playAudio(2, 40);
-        runDiagonalSpreadEffect(2, 40);
+        runDiagonalSpreadEffect(2, 40, explicitServerStartTime);
       } else if (effectNum === 3) {
-        playAudio(3, 13);
-        runHorizontalScanEffect(3, 13, 3.25);
+        runHorizontalScanEffect(3, 13, 3.25, explicitServerStartTime);
       } else if (effectNum === 4) {
-        playAudio(4, 5);
-        runHorizontalScanEffect(4, 5, 1.25);
+        runHorizontalScanEffect(4, 5, 1.25, explicitServerStartTime);
       }
     }
+
+    const EFFECT_CONFIGS_DURATIONS = { 1: 26, 2: 40, 3: 13, 4: 5 };
 
     function stopEffect() {
       stopAllAudio();
       resetAllSeats("white");
     }
 
-    // --- ĐỒNG BỘ WEBSOCKET + BROADCASTCHANNEL VỚI CONTROLLER.HTML ---
-    // 1. BroadcastChannel: Đồng bộ tức thì giữa các tab cùng trình duyệt (0ms lag)
+    // --- ĐỒNG BỘ WEBSOCKET + NTP CLOCK SYNC + BROADCASTCHANNEL ---
     const bc = new BroadcastChannel("stage101_channel");
     bc.onmessage = (e) => {
       const data = e.data;
       if (!data) return;
       if (data.type === "TRIGGER_EFFECT") {
-        triggerEffect(Number(data.effect));
+        triggerEffect(Number(data.effect), data.serverStartTime);
       } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
         stopEffect();
       }
     };
 
-    // 2. WebSocket: Đồng bộ qua Server NodeJS / OnRender từ các máy khác nhau
     let ws = null;
+    let clockSyncTimer = null;
+    let fallbackPollTimer = null;
+
     function connectWebSocket() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}/ws`;
@@ -841,23 +875,48 @@
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("[WS] Đã kết nối tới Server NodeJS");
+        console.log("[WS] Đã kết nối Server NodeJS (Hỗ trợ đa máy toàn cầu)");
         hudDot.className = "hud-dot";
         hudStatus.textContent = "Sẵn sàng (Đã kết nối Server)";
+        syncServerClock(ws);
+
+        if (clockSyncTimer) clearInterval(clockSyncTimer);
+        clockSyncTimer = setInterval(() => syncServerClock(ws), 10000);
+
+        if (fallbackPollTimer) {
+          clearInterval(fallbackPollTimer);
+          fallbackPollTimer = null;
+        }
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+
+          // Phản hồi tính độ lệch đồng hồ (NTP algorithm)
+          if (msg.type === "TIME_SYNC_RESPONSE") {
+            const now = Date.now();
+            const rtt = now - msg.clientPingTime;
+            lastPingLatency = Math.round(rtt / 2);
+            // Độ lệch: serverTime - (thời gian gửi + 1/2 độ trễ mạng)
+            serverTimeOffset = msg.serverTime - (msg.clientPingTime + lastPingLatency);
+            console.log(`[Clock Sync] Ping: ${lastPingLatency}ms | Offset: ${serverTimeOffset}ms`);
+            return;
+          }
+
+          if (msg.clientsCount !== undefined) {
+            onlineClientsCount = msg.clientsCount;
+          }
+
           if (msg.type === "EFFECT_TRIGGERED" && msg.state) {
-            triggerEffect(Number(msg.state.effect));
+            triggerEffect(Number(msg.state.effect), msg.state.serverStartTime);
           } else if (msg.type === "EFFECT_STOPPED" || msg.type === "RESET") {
             stopEffect();
           } else if (msg.type === "STATE_SYNC" && msg.state && msg.state.action === "start") {
-            // Đồng bộ nếu tải lại trang khi hiệu ứng đang chạy
-            const elapsedSinceStart = (Date.now() - msg.state.startTime) / 1000;
-            if (elapsedSinceStart < msg.state.duration) {
-              triggerEffect(Number(msg.state.effect));
+            // Máy khách ở xa mở trang sau khi hiệu ứng đã bắt đầu -> lập tức bắt kịp tiến độ
+            const currentElapsed = (getServerNow() - msg.state.serverStartTime) / 1000;
+            if (currentElapsed < msg.state.duration) {
+              triggerEffect(Number(msg.state.effect), msg.state.serverStartTime);
             }
           }
         } catch (err) {
@@ -866,15 +925,41 @@
       };
 
       ws.onclose = () => {
-        console.warn("[WS] Mất kết nối, đang thử kết nối lại sau 2s...");
+        console.warn("[WS] Mất kết nối, chuyển sang chế độ tự động kết nối lại & polling...");
         hudDot.className = "hud-dot disconnected";
         hudStatus.textContent = "Mất kết nối server (Đang thử lại)";
-        setTimeout(connectWebSocket, 2000);
+
+        // Kích hoạt cơ chế Polling dự phòng qua REST API
+        if (!fallbackPollTimer) {
+          fallbackPollTimer = setInterval(pollServerState, 1500);
+        }
+        setTimeout(connectWebSocket, 2500);
       };
 
-      ws.onerror = (err) => {
+      ws.onerror = () => {
         hudDot.className = "hud-dot disconnected";
       };
+    }
+
+    // Polling REST API dự phòng khi mạng quá yếu hoặc chặn WebSocket
+    async function pollServerState() {
+      try {
+        const res = await fetch("/api/state");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.serverTime) {
+            serverTimeOffset = data.serverTime - Date.now();
+          }
+          if (data.state && data.state.action === "start") {
+            const elapsed = (getServerNow() - data.state.serverStartTime) / 1000;
+            if (elapsed < data.state.duration && currentEffectState.effect !== data.state.effect) {
+              triggerEffect(Number(data.state.effect), data.state.serverStartTime);
+            }
+          } else if (data.state && (data.state.action === "stop" || data.state.action === "reset") && currentEffectState.effect !== null) {
+            stopEffect();
+          }
+        }
+      } catch (e) {}
     }
 
     connectWebSocket();
