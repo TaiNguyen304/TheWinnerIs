@@ -241,21 +241,6 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* Hiệu ứng tia sáng quét ngang / dọc ảo */
-    .scan-beam {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 12px;
-      background: linear-gradient(90deg, transparent 5%, rgba(0, 240, 255, 0.85) 30%, #ffffff 50%, rgba(0, 240, 255, 0.85) 70%, transparent 95%);
-      box-shadow: 0 0 35px rgba(0, 240, 255, 1), 0 0 60px rgba(0, 180, 255, 0.8);
-      pointer-events: none;
-      z-index: 15;
-      display: none;
-      opacity: 0.9;
-      transform: translateY(-50%);
-    }
-
     /* HUD hiển thị trạng thái góc trên bên phải */
     .hud-overlay {
       position: absolute;
@@ -350,10 +335,6 @@
       <i class="line l5"></i><i class="line l6"></i>
     </div>
 
-    <!-- 2 tia sáng ngang quét xuống cho Hiệu ứng 3 & 4 -->
-    <div class="scan-beam" id="scanBeam1"></div>
-    <div class="scan-beam" id="scanBeam2"></div>
-
     <!-- HUD Thông tin trạng thái & Nút liên kết Controller -->
     <div class="hud-overlay" id="hudOverlay">
       <span class="hud-dot" id="hudDot"></span>
@@ -380,8 +361,6 @@
   <script>
     // --- KHỞI TẠO TỌA ĐỘ VÀ DOM CHO ĐÚNG 101 Ô ---
     const audience = document.getElementById("audience");
-    const scanBeam1 = document.getElementById("scanBeam1");
-    const scanBeam2 = document.getElementById("scanBeam2");
     const hudDot = document.getElementById("hudDot");
     const hudStatus = document.getElementById("hudStatus");
     const hudEffectName = document.getElementById("hudEffectName");
@@ -394,6 +373,10 @@
       3: document.getElementById("audioJudgeVote"),
       4: document.getElementById("audioResult")
     };
+
+    // Kiểm tra nếu đang chạy trong iframe hoặc chế độ mute của Controller
+    const urlParams = new URLSearchParams(window.location.search);
+    const isMuted = window.self !== window.top || urlParams.get("mute") === "1";
 
     // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
     const rows = [
@@ -466,6 +449,7 @@
     // 3. Judge_Vote.mp3 (Hiệu ứng 3)
     // 4. Result.mp3 (Hiệu ứng 4)
     function playAudio(effectNum, duration) {
+      if (isMuted) return; // Không phát âm thanh nếu ở trong iframe / chế độ mute trên Controller
       stopAllAudio();
       const audioEl = audioElements[effectNum];
 
@@ -477,7 +461,9 @@
             audioUnlockModal.style.display = "none";
           }).catch(err => {
             console.warn(`[Audio] Trình duyệt chặn tự động phát âm thanh (${audioEl.src}):`, err);
-            audioUnlockModal.style.display = "flex";
+            if (!isMuted) {
+              audioUnlockModal.style.display = "flex";
+            }
           });
         }
       }
@@ -495,7 +481,7 @@
     // Bấm vào màn hình hoặc banner để mở khóa phát âm thanh trình duyệt
     audioUnlockModal.addEventListener("click", () => {
       audioUnlockModal.style.display = "none";
-      if (currentEffectState.effect) {
+      if (!isMuted && currentEffectState.effect) {
         const audioEl = audioElements[currentEffectState.effect];
         if (audioEl) {
           audioEl.play().catch(() => {});
@@ -504,7 +490,7 @@
     });
 
     document.addEventListener("click", () => {
-      if (audioUnlockModal.style.display === "flex" && currentEffectState.effect) {
+      if (!isMuted && audioUnlockModal.style.display === "flex" && currentEffectState.effect) {
         audioUnlockModal.style.display = "none";
         const audioEl = audioElements[currentEffectState.effect];
         if (audioEl) {
@@ -538,8 +524,6 @@
         cancelAnimationFrame(currentAnimationId);
         currentAnimationId = null;
       }
-      scanBeam1.style.display = "none";
-      scanBeam2.style.display = "none";
 
       seats.forEach(s => {
         s.el.className = "seat";
@@ -572,7 +556,7 @@
 
       // Đồng bộ thời gian phát audio với độ trôi
       const audioEl = audioElements[effectNum];
-      if (audioEl) {
+      if (audioEl && !isMuted) {
         const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
         if (currentElapsed < totalDuration) {
           audioEl.currentTime = currentElapsed;
@@ -624,14 +608,11 @@
       currentAnimationId = requestAnimationFrame(animate);
     }
 
-    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s): 2 đường quét ngang
+    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s): 2 hàng ô sáng ngang di chuyển từ trên xuống dưới theo vòng lặp
     function runHorizontalScanEffect(effectNum, totalDuration, loopDuration, explicitServerStartTime = null) {
       resetAllSeats("black");
       const startTimestamp = explicitServerStartTime || getServerNow();
       currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration, serverStartTime: startTimestamp };
-
-      scanBeam1.style.display = "block";
-      scanBeam2.style.display = "block";
 
       const effectNames = {
         3: `Hiệu ứng 3 (Judge Vote - ${totalDuration}s, Lặp ${loopDuration}s)`,
@@ -642,7 +623,7 @@
       const totalLoops = Math.round(totalDuration / loopDuration);
 
       const audioEl = audioElements[effectNum];
-      if (audioEl) {
+      if (audioEl && !isMuted) {
         const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
         if (currentElapsed < totalDuration) {
           audioEl.currentTime = currentElapsed;
@@ -655,8 +636,6 @@
         const elapsed = (now - startTimestamp) / 1000;
 
         if (elapsed >= totalDuration) {
-          scanBeam1.style.display = "none";
-          scanBeam2.style.display = "none";
           seats.forEach(s => {
             s.el.className = "seat is-white";
           });
@@ -676,24 +655,14 @@
         const progress = loopElapsed / loopDuration;
 
         hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s (Vòng ${currentLoopNum}/${totalLoops})`;
-        hudStatus.textContent = `2 Đường ngang quét từ trên xuống`;
+        hudStatus.textContent = `2 Hàng ô sáng ngang di chuyển từ trên xuống`;
 
-        const beam1Progress = progress;
-        const beam2Progress = (progress + 0.35) % 1;
-
-        const y1 = MIN_Y + beam1Progress * (MAX_Y - MIN_Y + 120);
-        const y2 = MIN_Y + beam2Progress * (MAX_Y - MIN_Y + 120);
-
-        scanBeam1.style.top = `${y1}px`;
-        scanBeam2.style.top = `${y2}px`;
+        // Tính đúng 2 hàng ô sáng tại mỗi thời điểm (trong 10 hàng: rowIndex 0 -> 9)
+        const activeRow1 = Math.floor(progress * 10) % 10;
+        const activeRow2 = (activeRow1 + 5) % 10;
 
         seats.forEach(s => {
-          const dist1 = Math.abs(s.y - y1);
-          const dist2 = Math.abs(s.y - y2);
-
-          if (dist1 < 55 || dist2 < 55) {
-            s.el.className = "seat is-cyan-lit";
-          } else if (dist1 < 100 || dist2 < 100) {
+          if (s.rowIndex === activeRow1 || s.rowIndex === activeRow2) {
             s.el.className = "seat is-active-lit";
           } else {
             s.el.className = "seat is-black";
