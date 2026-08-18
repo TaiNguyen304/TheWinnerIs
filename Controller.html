@@ -596,11 +596,8 @@
       </button>
     </div>
 
-    <div class="audio-settings">
-      <label>
-        <input type="checkbox" id="chkAudioOnController" checked>
-        <span>Phát âm thanh trên Bảng Điều Khiển</span>
-      </label>
+    <div style="font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+      <span>🔇 Âm thanh chỉ phát trên màn hình Sân khấu (index.html)</span>
     </div>
   </div>
 
@@ -625,12 +622,6 @@
     <span><span class="key-badge">Space</span> / <span class="key-badge">Esc</span> Dừng hiệu ứng</span>
   </div>
 
-  <!-- Audio Elements trên Controller -->
-  <audio id="ctrlAudioOpening" src="/audio/Opening.mp3" preload="auto"></audio>
-  <audio id="ctrlAudioContestant" src="/audio/Contestant.mp3" preload="auto"></audio>
-  <audio id="ctrlAudioJudgeVote" src="/audio/Judge_Vote.mp3" preload="auto"></audio>
-  <audio id="ctrlAudioResult" src="/audio/Result.mp3" preload="auto"></audio>
-
   <script>
     const statusDot = document.getElementById("statusDot");
     const connectionText = document.getElementById("connectionText");
@@ -640,20 +631,12 @@
     const currentEffectLabel = document.getElementById("currentEffectLabel");
     const currentSoundLabel = document.getElementById("currentSoundLabel");
     const currentLoopLabel = document.getElementById("currentLoopLabel");
-    const chkAudioOnController = document.getElementById("chkAudioOnController");
 
     const effectCards = {
       1: document.getElementById("cardE1"),
       2: document.getElementById("cardE2"),
       3: document.getElementById("cardE3"),
       4: document.getElementById("cardE4")
-    };
-
-    const ctrlAudioElements = {
-      1: document.getElementById("ctrlAudioOpening"),
-      2: document.getElementById("ctrlAudioContestant"),
-      3: document.getElementById("ctrlAudioJudgeVote"),
-      4: document.getElementById("ctrlAudioResult")
     };
 
     const EFFECT_META = {
@@ -804,26 +787,7 @@
     }
 
     // Phát âm thanh trên controller nếu được bật
-    function playControllerAudio(effectNum) {
-      if (!chkAudioOnController.checked) return;
-      stopControllerAudio();
-      const audio = ctrlAudioElements[effectNum];
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      }
-    }
-
-    function stopControllerAudio() {
-      Object.values(ctrlAudioElements).forEach(audio => {
-        if (audio) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      });
-    }
-
-    // Cập nhật giao diện Controller khi kích hoạt
+    // Cập nhật giao diện Controller khi kích hoạt (Controller không phát âm thanh)
     function updateUIOnTrigger(effectNum, explicitStartTime = null) {
       activeRunningEffect = effectNum;
       const meta = EFFECT_META[effectNum];
@@ -842,11 +806,9 @@
       liveTag.textContent = `ĐANG CHẠY: ${meta.name.toUpperCase()}`;
       liveTag.style.color = "#ffd269";
       currentEffectLabel.textContent = `Hiệu ứng: ${meta.name}`;
-      currentSoundLabel.textContent = `Nhạc: ${meta.sound}`;
+      currentSoundLabel.textContent = `Nhạc phát trên Sân khấu: ${meta.sound}`;
 
       if (timerInterval) clearInterval(timerInterval);
-
-      playControllerAudio(effectNum);
 
       timerInterval = setInterval(() => {
         const now = getServerNow();
@@ -885,7 +847,6 @@
         timerInterval = null;
       }
       activeRunningEffect = null;
-      stopControllerAudio();
 
       Object.values(effectCards).forEach(card => card.classList.remove("active-running"));
       liveTag.textContent = "TRẠNG THÁI: ĐÃ DỪNG";
@@ -893,7 +854,7 @@
       liveTimer.textContent = "00.0s";
       progressFill.style.width = "0%";
       currentEffectLabel.textContent = "Đã dừng hiệu ứng";
-      currentSoundLabel.textContent = "Âm thanh: Đã tắt";
+      currentSoundLabel.textContent = "Âm thanh Sân khấu: Đã tắt";
       currentLoopLabel.textContent = "Vòng lặp: -";
     }
 

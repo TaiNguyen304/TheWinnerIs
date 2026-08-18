@@ -460,165 +460,30 @@
 
     console.log(`Đã khởi tạo thành công ${seats.length} ô khán giả trên sân khấu.`);
 
-    // --- TỔNG HỢP ÂM THANH BẰNG WEB AUDIO API (FALLBACK NẾU CHƯA CÓ FILE MP3 HOẶC BỊ CHẶN) ---
-    let audioCtx = null;
-    function getAudioContext() {
-      if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContextClass();
-      }
-      if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-      }
-      return audioCtx;
-    }
-
-    // Bộ tạo nhạc sân khấu tổng hợp
-    let synthPlaying = false;
-    let synthIntervals = [];
-
-    function stopAllSynth() {
-      synthPlaying = false;
-      synthIntervals.forEach(id => clearInterval(id));
-      synthIntervals = [];
-    }
-
-    function playSynthesizedSoundtrack(effectNum, duration) {
-      try {
-        const ctx = getAudioContext();
-        stopAllSynth();
-        synthPlaying = true;
-
-        if (effectNum === 1 || effectNum === 2) {
-          // Opening / Contestant Fanfare & Suspense beat
-          let step = 0;
-          const tempo = effectNum === 1 ? 120 : 105;
-          const beatInterval = (60 / tempo) * 500;
-
-          const playBeat = () => {
-            if (!synthPlaying) return;
-            const now = ctx.currentTime;
-            
-            // Bass Kick / Hit
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.frequency.setValueAtTime(step % 4 === 0 ? 110 : 80, now);
-            osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.35);
-
-            // Synth brass chime
-            if (step % 2 === 0) {
-              const notes = [220, 277.18, 329.63, 440, 554.37, 659.25];
-              const note = notes[(Math.floor(step / 2)) % notes.length];
-              const synthOsc = ctx.createOscillator();
-              const synthGain = ctx.createGain();
-              synthOsc.type = "sawtooth";
-              synthOsc.frequency.setValueAtTime(note, now);
-              synthGain.gain.setValueAtTime(0.18, now);
-              synthGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-              synthOsc.connect(synthGain);
-              synthGain.connect(ctx.destination);
-              synthOsc.start(now);
-              synthOsc.stop(now + 0.6);
-            }
-            step++;
-          };
-
-          playBeat();
-          const timerId = setInterval(playBeat, beatInterval);
-          synthIntervals.push(timerId);
-
-        } else if (effectNum === 3) {
-          // Judge Vote Pulse / Ticking suspense
-          let tick = 0;
-          const tickInterval = 203; // ~13s / 64 ticks
-          const playTick = () => {
-            if (!synthPlaying) return;
-            const now = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(tick % 8 === 0 ? 880 : (tick % 4 === 0 ? 660 : 440), now);
-            gain.gain.setValueAtTime(0.25, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.08);
-            tick++;
-          };
-          const timerId = setInterval(playTick, tickInterval);
-          synthIntervals.push(timerId);
-
-        } else if (effectNum === 4) {
-          // Result Dramatic Impact
-          const now = ctx.currentTime;
-          // Sub boom
-          const sub = ctx.createOscillator();
-          const subGain = ctx.createGain();
-          sub.frequency.setValueAtTime(140, now);
-          sub.frequency.exponentialRampToValueAtTime(25, now + 1.2);
-          subGain.gain.setValueAtTime(0.6, now);
-          subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-          sub.connect(subGain);
-          subGain.connect(ctx.destination);
-          sub.start(now);
-          sub.stop(now + 1.2);
-
-          // Fast riser roll
-          let r = 0;
-          const rollId = setInterval(() => {
-            if (!synthPlaying || r > 20) return;
-            const t = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = "triangle";
-            osc.frequency.setValueAtTime(300 + r * 35, t);
-            g.gain.setValueAtTime(0.2, t);
-            g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-            osc.connect(g);
-            g.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.06);
-            r++;
-          }, 60);
-          synthIntervals.push(rollId);
-        }
-      } catch (err) {
-        console.warn("Synthesizer error:", err);
-      }
-    }
-
+    // --- HỆ THỐNG ÂM THANH SÂN KHẤU (CHỈ 4 FILE ĐÃ ĐỊNH NGHĨA) ---
+    // 1. Opening.mp3 (Hiệu ứng 1)
+    // 2. Contestant.mp3 (Hiệu ứng 2)
+    // 3. Judge_Vote.mp3 (Hiệu ứng 3)
+    // 4. Result.mp3 (Hiệu ứng 4)
     function playAudio(effectNum, duration) {
       stopAllAudio();
       const audioEl = audioElements[effectNum];
-      let playedFile = false;
 
       if (audioEl) {
         audioEl.currentTime = 0;
         const playPromise = audioEl.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
-            playedFile = true;
             audioUnlockModal.style.display = "none";
           }).catch(err => {
-            console.warn(`Không thể phát file âm thanh (mã hiệu ứng: ${effectNum}), chuyển sang âm thanh tổng hợp:`, err);
+            console.warn(`[Audio] Trình duyệt chặn tự động phát âm thanh (${audioEl.src}):`, err);
             audioUnlockModal.style.display = "flex";
-            playSynthesizedSoundtrack(effectNum, duration);
           });
         }
-      } else {
-        playSynthesizedSoundtrack(effectNum, duration);
       }
     }
 
     function stopAllAudio() {
-      stopAllSynth();
       Object.values(audioElements).forEach(audio => {
         if (audio) {
           audio.pause();
@@ -627,14 +492,26 @@
       });
     }
 
-    // Bấm vào modal để mở khóa AudioContext nếu trình duyệt yêu cầu tương tác
+    // Bấm vào màn hình hoặc banner để mở khóa phát âm thanh trình duyệt
     audioUnlockModal.addEventListener("click", () => {
-      getAudioContext();
       audioUnlockModal.style.display = "none";
       if (currentEffectState.effect) {
-        playAudio(currentEffectState.effect, currentEffectState.duration);
+        const audioEl = audioElements[currentEffectState.effect];
+        if (audioEl) {
+          audioEl.play().catch(() => {});
+        }
       }
     });
+
+    document.addEventListener("click", () => {
+      if (audioUnlockModal.style.display === "flex" && currentEffectState.effect) {
+        audioUnlockModal.style.display = "none";
+        const audioEl = audioElements[currentEffectState.effect];
+        if (audioEl) {
+          audioEl.play().catch(() => {});
+        }
+      }
+    }, { once: true });
 
     // --- ĐỒNG BỘ THỜI GIAN CHUẨN TOÀN CẦU (NTP SERVER OFFSET CLOCK SYNC) ---
     let serverTimeOffset = 0;
