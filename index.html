@@ -655,11 +655,11 @@
         const progress = loopElapsed / loopDuration;
 
         hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s (Vòng ${currentLoopNum}/${totalLoops})`;
-        hudStatus.textContent = `2 Hàng ô sáng ngang di chuyển từ trên xuống`;
+        hudStatus.textContent = `2 Hàng ô liền kề sáng ngang di chuyển từ trên xuống`;
 
-        // Tính đúng 2 hàng ô sáng tại mỗi thời điểm (trong 10 hàng: rowIndex 0 -> 9)
+        // 2 hàng ô liền kề nhau và cặp đầu-cuối sáng đèn (trong 10 hàng: rowIndex 0 -> 9)
         const activeRow1 = Math.floor(progress * 10) % 10;
-        const activeRow2 = (activeRow1 + 5) % 10;
+        const activeRow2 = (activeRow1 + 1) % 10;
 
         seats.forEach(s => {
           if (s.rowIndex === activeRow1 || s.rowIndex === activeRow2) {
