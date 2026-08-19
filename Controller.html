@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng Điều Khiển Sân Khấu 101 Ô (Stage Controller)</title>
+  <title>Bảng Điều Khiển Sân Khấu 101 Ô & Ban Giám Khảo</title>
   <style>
     /* Yêu cầu bắt buộc từ người dùng: Ở file Controller, dùng font-weight: bold !important; cho * */
     * {
@@ -20,7 +20,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 24px;
+      padding: 20px;
       gap: 20px;
     }
 
@@ -33,7 +33,7 @@
       background: #111738;
       border: 2px solid #3b427a;
       border-radius: 16px;
-      padding: 18px 24px;
+      padding: 16px 22px;
       gap: 16px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
@@ -45,7 +45,7 @@
     }
 
     .title-group h1 {
-      font-size: 24px;
+      font-size: 22px;
       color: #ffffff;
       letter-spacing: 0.5px;
       display: flex;
@@ -61,7 +61,8 @@
     .status-group {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .connection-badge {
@@ -91,10 +92,10 @@
     .btn-open-stage {
       background: linear-gradient(135deg, #4f46e5, #7c3aed);
       color: #ffffff;
-      padding: 10px 20px;
+      padding: 10px 18px;
       border-radius: 10px;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
       border: none;
       cursor: pointer;
       display: inline-flex;
@@ -109,87 +110,368 @@
       box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
     }
 
-    /* Bảng Trạng Thái Trực Tiếp */
-    .live-status-card {
-      background: linear-gradient(135deg, #131b45, #0d122e);
-      border: 2px solid #2d3875;
+    .btn-open-judge {
+      background: linear-gradient(135deg, #db2777, #be185d);
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(219, 39, 119, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    /* Quản Lý Mã Phòng & Giám Khảo */
+    .room-manager-bar {
+      background: linear-gradient(135deg, #182252, #10163a);
+      border: 2px solid #38458a;
+      border-radius: 16px;
+      padding: 18px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .room-code-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .room-code-box {
+      background: #060919;
+      border: 2px solid #a855f7;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 24px;
+      letter-spacing: 4px;
+      color: #ffd269;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+    }
+
+    .voting-status-pill {
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .voting-status-pill.locked { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; }
+    .voting-status-pill.normal { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; color: #4ade80; }
+    .voting-status-pill.versus { background: rgba(236, 72, 153, 0.2); border: 1px solid #ec4899; color: #f472b6; }
+
+    /* Bảng Điều Khiển Bình Chọn & Hiển Thị Kết Quả */
+    .section-card {
+      background: #111738;
+      border: 2px solid #28336d;
       border-radius: 16px;
       padding: 20px 24px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      gap: 16px;
     }
 
-    .live-status-header {
+    .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .live-tag {
-      font-size: 13px;
-      text-transform: uppercase;
-      color: #38bdf8;
-      letter-spacing: 1px;
-    }
-
-    .live-timer {
-      font-size: 28px;
-      color: #ffd269;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 12px rgba(255, 210, 105, 0.5);
-    }
-
-    .progress-bar-bg {
-      width: 100%;
-      height: 14px;
-      background: #1e254d;
-      border-radius: 9999px;
-      overflow: hidden;
-      border: 1px solid #374175;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
-      transition: width 0.1s linear;
-    }
-
-    .live-info-sub {
+    .section-title {
+      font-size: 17px;
+      color: #ffffff;
       display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      color: #cbd5e1;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* Grid Nút Bấm Hiệu Ứng */
+    .action-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .btn-action {
+      padding: 16px 18px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .btn-action:active {
+      transform: scale(0.98);
+    }
+
+    /* Màu các nút bấm theo chức năng */
+    .btn-vote-normal {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      border: 1.5px solid #22c55e;
+    }
+    .btn-vote-normal:hover {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+
+    .btn-vote-versus {
+      background: linear-gradient(135deg, #ec4899 0%, #3b82f6 100%);
+      border: 1.5px solid #c084fc;
+    }
+    .btn-vote-versus:hover {
+      background: linear-gradient(135deg, #f472b6 0%, #60a5fa 100%);
+      box-shadow: 0 0 18px rgba(192, 132, 252, 0.6);
+    }
+
+    .btn-vote-lock {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      border: 1.5px solid #ef4444;
+    }
+    .btn-vote-lock:hover {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-show-normal {
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1.5px solid #10b981;
+    }
+    .btn-show-normal:hover {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-show-versus {
+      background: linear-gradient(135deg, #be185d 0%, #1d4ed8 100%);
+      border: 1.5px solid #e879f9;
+    }
+    .btn-show-versus:hover {
+      background: linear-gradient(135deg, #db2777 0%, #2563eb 100%);
+      box-shadow: 0 0 18px rgba(232, 121, 249, 0.6);
+    }
+
+    .btn-show-ref {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border: 1.5px solid #f59e0b;
+    }
+    .btn-show-ref:hover {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-input-audience {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      border: 1.5px solid #818cf8;
+    }
+    .btn-input-audience:hover {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      box-shadow: 0 0 15px rgba(129, 140, 248, 0.5);
+    }
+
+    .btn-show-audience {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      border: 1.5px solid #a78bfa;
+    }
+    .btn-show-audience:hover {
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+      box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+    }
+
+    /* Các nút Reset Điểm & Tỉ Số */
+    .reset-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .btn-reset-item {
+      background: linear-gradient(135deg, #7c2d12, #431407);
+      border: 1.5px solid #f97316;
+      color: #fed7aa;
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .btn-reset-item:hover {
+      background: linear-gradient(135deg, #ea580c, #c2410c);
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);
+    }
+
+    /* Box Nhập Tỉ Số Đối Đầu */
+    .versus-input-container {
+      background: #090e29;
+      border: 1.5px solid #a855f7;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .versus-inputs-flex {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .versus-input-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .versus-input-field label {
+      font-size: 14px;
+    }
+    .versus-input-field label.pink { color: #f472b6; }
+    .versus-input-field label.blue { color: #60a5fa; }
+
+    .versus-input-field input {
+      width: 90px;
+      background: #111738;
+      border: 1.5px solid #475569;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #ffffff;
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+    }
+    .versus-input-field input.pink { border-color: #ec4899; color: #f472b6; }
+    .versus-input-field input.blue { border-color: #3b82f6; color: #60a5fa; }
+
+    /* Mục Hiện sự bình chọn của giám khảo bất kỳ */
+    .specific-inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 12px;
+      background: #090e29;
+      border: 1.5px solid #334155;
+      border-radius: 12px;
+    }
+
+    .specific-seat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .specific-seat-item label {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .specific-seat-item input {
+      background: #182252;
+      border: 1.5px solid #6366f1;
+      border-radius: 8px;
+      padding: 8px;
+      color: #ffd269;
+      font-size: 16px;
+      text-align: center;
+      outline: none;
+    }
+
+    .btn-confirm-specific {
+      background: linear-gradient(135deg, #059669, #0d9488);
+      border: 1.5px solid #14b8a6;
+      color: #ffffff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4);
+      transition: all 0.15s ease;
+    }
+    .btn-confirm-specific:hover {
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      box-shadow: 0 0 18px rgba(20, 184, 166, 0.6);
+    }
+
+    /* Thống kê Ban Giám Khảo (1 - 101) */
+    .judge-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-pill {
+      background: #182046;
+      border: 1px solid #2f3c77;
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      color: #ffffff;
+    }
+
+    /* Grid 4 Hiệu Ứng Sân Khấu */
     .effects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
     }
 
     .effect-card {
       background: #131a42;
       border: 2px solid #28336d;
       border-radius: 16px;
-      padding: 22px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 16px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
+      gap: 14px;
+      transition: all 0.2s ease;
     }
 
     .effect-card:hover {
       border-color: #6366f1;
-      transform: translateY(-4px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 15px rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
     }
 
     .effect-card.active-running {
@@ -202,11 +484,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: 9999px;
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
       width: fit-content;
     }
 
@@ -215,176 +496,69 @@
     .badge-e3 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1.5px solid #3b82f6; }
     .badge-e4 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1.5px solid #ef4444; }
 
-    .effect-card h3 {
-      font-size: 20px;
-      color: #ffffff;
-    }
-
-    .effect-details {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 13px;
-      color: #94a3b8;
-      line-height: 1.4;
-    }
-
-    .detail-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .detail-item span.highlight {
-      color: #f1f5f9;
-    }
-
     .btn-trigger {
       width: 100%;
-      padding: 16px 20px;
-      border-radius: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
       border: none;
-      font-size: 17px;
+      font-size: 15px;
       cursor: pointer;
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: all 0.15s ease;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      gap: 8px;
     }
 
-    .btn-trigger:active {
-      transform: scale(0.98);
-    }
-
-    .btn-e1 {
-      background: linear-gradient(135deg, #d97706, #b45309);
-    }
-    .btn-e1:hover {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
-    }
-
-    .btn-e2 {
-      background: linear-gradient(135deg, #7e22ce, #6b21a8);
-    }
-    .btn-e2:hover {
-      background: linear-gradient(135deg, #9333ea, #7e22ce);
-      box-shadow: 0 6px 20px rgba(147, 51, 234, 0.5);
-    }
-
-    .btn-e3 {
-      background: linear-gradient(135deg, #1d4ed8, #1e40af);
-    }
-    .btn-e3:hover {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
-    }
-
-    .btn-e4 {
-      background: linear-gradient(135deg, #b91c1c, #991b1b);
-    }
-    .btn-e4:hover {
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
-    }
+    .btn-e1 { background: linear-gradient(135deg, #d97706, #b45309); }
+    .btn-e2 { background: linear-gradient(135deg, #7e22ce, #6b21a8); }
+    .btn-e3 { background: linear-gradient(135deg, #1d4ed8, #1e40af); }
+    .btn-e4 { background: linear-gradient(135deg, #b91c1c, #991b1b); }
 
     /* Thanh Điều Khiển Phụ & Dừng */
     .controls-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 14px;
       justify-content: space-between;
       align-items: center;
       background: #111738;
       border: 2px solid #2d3875;
       border-radius: 16px;
-      padding: 16px 24px;
+      padding: 16px 22px;
     }
 
     .btn-stop-all {
       background: linear-gradient(135deg, #ef4444, #b91c1c);
       color: white;
       border: none;
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-size: 16px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 15px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
       box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-      transition: all 0.15s ease;
-    }
-
-    .btn-stop-all:hover {
-      background: linear-gradient(135deg, #f87171, #dc2626);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
     }
 
     .btn-aux {
       background: #1e293b;
       color: #cbd5e1;
       border: 1.5px solid #475569;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .btn-aux:hover {
-      background: #334155;
-      color: #ffffff;
-      border-color: #94a3b8;
-    }
-
-    .audio-settings {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: #090d24;
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: 1.5px solid #28336d;
-    }
-
-    .audio-settings label {
+      padding: 10px 16px;
+      border-radius: 8px;
       font-size: 13px;
-      color: #94a3b8;
-      display: flex;
-      align-items: center;
-      gap: 6px;
       cursor: pointer;
     }
-
-    .audio-settings input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: #6366f1;
-    }
+    .btn-aux:hover { background: #334155; color: #ffffff; }
 
     /* Khung Xem Trước Sân Khấu (Live Split Preview) */
     .preview-section {
       background: #111738;
       border: 2px solid #28336d;
       border-radius: 16px;
-      padding: 20px 24px;
+      padding: 18px 22px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-    }
-
-    .preview-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 15px;
-      color: #e2e8f0;
+      gap: 12px;
     }
 
     .preview-iframe-wrapper {
@@ -402,32 +576,111 @@
       border: none;
     }
 
-    /* Hotkeys Guide */
-    .hotkeys-guide {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      font-size: 12px;
-      color: #64748b;
+    /* Modal Popup Nhập Tỉ Số Khán Giả */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(4, 7, 24, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
       align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
     }
 
-    .key-badge {
-      background: #1e293b;
-      color: #38bdf8;
-      border: 1px solid #334155;
-      padding: 2px 8px;
-      border-radius: 6px;
+    .modal-card {
+      background: #111738;
+      border: 2px solid #a855f7;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.3);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .modal-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .modal-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-input-group label {
+      font-size: 13px;
+    }
+
+    .modal-input-group label.pink { color: #f472b6; }
+    .modal-input-group label.blue { color: #60a5fa; }
+
+    .modal-input {
+      width: 100%;
+      background: #090d24;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      color: #ffffff;
+      font-size: 22px;
+      text-align: center;
+      outline: none;
+    }
+
+    .modal-input.pink { border-color: #ec4899; color: #f472b6; }
+    .modal-input.blue { border-color: #3b82f6; color: #60a5fa; }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-modal-save {
+      flex: 1;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .btn-modal-close {
+      flex: 1;
+      background: #334155;
+      color: #cbd5e1;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
     }
   </style>
 </head>
 
 <body>
-  <!-- Thanh Tiêu Đề & Kết Nối -->
+  <!-- Header Bar -->
   <div class="header-bar">
     <div class="title-group">
-      <h1>🎛️ Bảng Điều Khiển Sân Khấu 101 Ô Khán Giả</h1>
-      <p>Hệ thống điều khiển ánh sáng & đồng bộ âm thanh thời gian thực (NodeJS + WebSocket)</p>
+      <h1>🎛️ BẢNG ĐIỀU KHIỂN SÂN KHẤU 101 Ô</h1>
+      <p>Hệ thống đồng bộ ánh sáng, âm thanh sân khấu & biểu quyết Ban Giám Khảo</p>
     </div>
 
     <div class="status-group">
@@ -436,145 +689,231 @@
         <span id="connectionText">Đang kết nối Server...</span>
       </div>
 
-      <button class="btn-open-stage" id="btnOpenStageTab" onclick="openStageWindow()">
+      <button class="btn-open-stage" onclick="openStageWindow()">
         🖥️ Mở Sân Khấu (index.html)
       </button>
+
+      <button class="btn-open-judge" onclick="openJudgeWindow()">
+        📱 Mở Giám Khảo (Judge.html)
+      </button>
     </div>
   </div>
 
-  <!-- Thanh Hiển Thị & Chia Sẻ Link Trực Tuyến OnRender -->
-  <div style="background: #111738; border: 2px solid #3b427a; border-radius: 16px; padding: 14px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
-    <div style="display: flex; flex-direction: column; gap: 4px;">
-      <span style="font-size: 13px; color: #38bdf8;">🔗 LIÊN KẾT TRỰC TUYẾN ONRENDER:</span>
-      <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px;">
-        <span>Màn hình Sân Khấu: <a id="linkStageDisplay" href="/index.html" target="_blank" style="color: #ffd269; text-decoration: underline;">https://thewinneris.onrender.com/index.html</a></span>
-        <span>Bảng Điều Khiển: <a id="linkController" href="/Controller.html" style="color: #a855f7; text-decoration: underline;">https://thewinneris.onrender.com/Controller.html</a></span>
+  <!-- Quản Lý Mã Phòng & Trạng Thái Ban Giám Khảo -->
+  <div class="room-manager-bar">
+    <div class="room-code-display">
+      <span style="font-size: 13px; color: #cbd5e1;">MÃ PHÒNG (6 SỐ):</span>
+      <span class="room-code-box" id="displayRoomCode">101101</span>
+      <button class="btn-aux" onclick="createNewRoom()">
+        🔄 Tạo Mã Mới
+      </button>
+      <button class="btn-aux" onclick="copyJudgeLink()">
+        📋 Copy Link Giám Khảo
+      </button>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span style="font-size: 13px; color: #94a3b8;">TRẠNG THÁI BÌNH CHỌN:</span>
+      <span class="voting-status-pill locked" id="votingStatusPill">🔒 ĐANG KHÓA</span>
+    </div>
+  </div>
+
+  <!-- BẢNG ĐIỀU KHIỂN BÌNH CHỌN & HIỂN THỊ KẾT QUẢ SÂN KHẤU -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">🗳️ ĐIỀU KHIỂN BÌNH CHỌN & KẾT QUẢ SÂN KHẤU (INDEX.HTML)</span>
+      <span style="font-size: 12px; color: #94a3b8;">Đồng bộ tức thì với 101 Giám khảo và Màn hình Sân khấu</span>
+    </div>
+
+    <!-- Hàng nút 1: Mở / Khóa Bình Chọn -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; color: #38bdf8;">1. ĐIỀU KHIỂN BÌNH CHỌN (MỞ CHO BAN GIÁM KHẢO BẤM):</span>
+      <div class="action-btn-grid">
+        <button class="btn-action btn-vote-normal" onclick="setVotingMode('NORMAL')">
+          🟢 Mở bình chọn (Thường)<br><small style="font-size: 11px; opacity: 0.9;">Mở nút Chọn & Không chọn</small>
+        </button>
+
+        <button class="btn-action btn-vote-versus" onclick="setVotingMode('VERSUS')">
+          ⚡ Mở bình chọn (Đối đầu)<br><small style="font-size: 11px; opacity: 0.9;">Mở nút Màu xanh & Màu hồng</small>
+        </button>
+
+        <button class="btn-action btn-vote-lock" onclick="setVotingMode('LOCKED')">
+          🔒 Khóa bình chọn<br><small style="font-size: 11px; opacity: 0.9;">Khóa toàn bộ nút bấm</small>
+        </button>
       </div>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <button class="btn-aux" onclick="copyLink('stage')" style="padding: 8px 14px; font-size: 12px;">
-        📋 Sao chép Link Sân Khấu
-      </button>
-      <button class="btn-aux" onclick="copyLink('controller')" style="padding: 8px 14px; font-size: 12px;">
-        📋 Sao chép Link Điều Khiển
+
+    <!-- Hàng nút 2: Hiển Thị Kết Quả Lên Sân Khấu -->
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+      <span style="font-size: 12px; color: #a855f7;">2. HIỂN THỊ KẾT QUẢ & TỈ SỐ TRÊN SÂN KHẤU (INDEX.HTML):</span>
+      
+      <!-- Hộp Nhập Tỉ Số Đối Đầu -->
+      <div class="versus-input-container">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: #ffd269; font-size: 14px;">⚡ TỈ SỐ ĐỐI ĐẦU:</span>
+          <small style="color: #94a3b8; font-size: 11px;">(Nhập số trực tiếp hoặc để trống để tự động lấy theo số phiếu thực tế)</small>
+        </div>
+        <div class="versus-inputs-flex">
+          <div class="versus-input-field">
+            <label class="pink">💖 Hồng:</label>
+            <input type="number" id="inputVersusPink" placeholder="Tự động" min="0" />
+          </div>
+          <div class="versus-input-field">
+            <label class="blue">🔷 Xanh:</label>
+            <input type="number" id="inputVersusBlue" placeholder="Tự động" min="0" />
+          </div>
+          <button type="button" class="btn-action btn-show-versus" style="padding: 10px 18px; font-size: 14px;" onclick="showVersusResult()">
+            🏆 Hiện kết quả (Đối đầu)
+          </button>
+        </div>
+      </div>
+
+      <div class="action-btn-grid">
+        <button class="btn-action btn-show-normal" onclick="showNormalResult()">
+          📊 Hiện kết quả (Thường)<br><small style="font-size: 11px; opacity: 0.9;">Xanh lá từng ô & đếm điểm</small>
+        </button>
+
+        <button class="btn-action btn-show-ref" onclick="showReferenceScore()">
+          🔀 Hiện tỉ số tham khảo<br><small style="font-size: 11px; opacity: 0.9;">Đổi chỗ 2 số mỗi 1 giây</small>
+        </button>
+
+        <button class="btn-action btn-input-audience" onclick="openAudienceModal()">
+          ✏️ Nhập tỉ số khán giả<br><small style="font-size: 11px; opacity: 0.9;">Mở hộp thoại nhập số</small>
+        </button>
+
+        <button class="btn-action btn-show-audience" onclick="showAudienceScore()">
+          👥 Hiện tỉ số khán giả<br><small style="font-size: 11px; opacity: 0.9;">Hiện tỉ số đã lưu lên Sân khấu</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hàng nút 3: Các Nút Reset Điểm & Tỉ Số -->
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 1px dashed #2f3c77;">
+      <span style="font-size: 12px; color: #f97316;">3. CÁC NÚT RESET ĐIỂM & TỈ SỐ SÂN KHẤU:</span>
+      <div class="reset-btn-grid">
+        <button type="button" class="btn-reset-item" onclick="resetStageScore()">
+          🔄 Reset điểm (Thường)
+        </button>
+        <button type="button" class="btn-reset-item" onclick="resetReferenceScore()">
+          🔄 Reset tỉ số (Tham khảo)
+        </button>
+        <button type="button" class="btn-reset-item" onclick="resetAudienceScore()">
+          🔄 Reset tỉ số khán giả
+        </button>
+      </div>
+    </div>
+
+    <!-- Thống kê phiếu bình chọn trực tiếp -->
+    <div style="margin-top: 8px;">
+      <span style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 8px;">📊 THỐNG KÊ PHIẾU BÌNH CHỌN HIỆN TẠI (1 - 101):</span>
+      <div class="judge-stats-grid">
+        <div class="stat-pill">
+          <span class="stat-label">Tổng đã vote</span>
+          <span class="stat-value" id="statTotalVoted">0 / 101</span>
+        </div>
+        <div class="stat-pill" style="border-color: #22c55e;">
+          <span class="stat-label" style="color: #4ade80;">Chọn (Xanh lá)</span>
+          <span class="stat-value" id="statChon" style="color: #4ade80;">0</span>
+        </div>
+        <div class="stat-pill" style="border-color: #ef4444;">
+          <span class="stat-label" style="color: #f87171;">Không chọn (Đỏ)</span>
+          <span class="stat-value" id="statKhongChon" style="color: #f87171;">0</span>
+        </div>
+        <div class="stat-pill" style="border-color: #ec4899;">
+          <span class="stat-label" style="color: #f472b6;">Màu hồng (Pink)</span>
+          <span class="stat-value" id="statHong" style="color: #f472b6;">0</span>
+        </div>
+        <div class="stat-pill" style="border-color: #3b82f6;">
+          <span class="stat-label" style="color: #60a5fa;">Màu xanh (Blue)</span>
+          <span class="stat-value" id="statXanh" style="color: #60a5fa;">0</span>
+        </div>
+        <div class="stat-pill" style="border-color: #a855f7;">
+          <span class="stat-label" style="color: #c084fc;">Tỉ số khán giả</span>
+          <span class="stat-value" id="statAudience" style="color: #c084fc; font-size: 17px;">0 - 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MỤC HIỆN SỰ BÌNH CHỌN CỦA GIÁM KHẢO BẤT KỲ -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">🎯 HIỆN SỰ BÌNH CHỌN CỦA GIÁM KHẢO BẤT KỲ</span>
+      <span style="font-size: 12px; color: #94a3b8;">Chọn số lượng và vị trí các giám khảo cần công bố kết quả lên màn hình index.html</span>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; background: #090e29; border: 1.5px solid #28336d; padding: 14px 18px; border-radius: 12px;">
+      <label style="color: #cbd5e1; font-size: 14px;">Nhập số ô cần mở (1 - 101):</label>
+      <input type="number" id="specificCountInput" min="1" max="101" placeholder="Nhập số ô (VD: 3)" style="width: 140px; background: #182252; border: 1.5px solid #38bdf8; border-radius: 8px; padding: 8px 12px; color: #ffd269; font-size: 16px; text-align: center; outline: none;" oninput="onSpecificCountChange()" />
+      <span style="font-size: 12px; color: #94a3b8;" id="specificCountHint">Nhập số để tự động sinh các ô nhập vị trí bên dưới.</span>
+    </div>
+
+    <!-- Khung chứa các textbox vị trí con tự động sinh ra -->
+    <div id="specificInputsContainer" class="specific-inputs-grid" style="display: none;"></div>
+
+    <div>
+      <button type="button" class="btn-confirm-specific" onclick="confirmSpecificJudges()">
+        ✅ XÁC NHẬN HIỂN THỊ TRÊN INDEX
       </button>
     </div>
   </div>
 
-  <!-- Trạng Thái Hiệu Ứng Đang Chạy -->
-  <div class="live-status-card">
-    <div class="live-status-header">
-      <span class="live-tag" id="liveTag">TRẠNG THÁI: SẴN SÀNG</span>
-      <span class="live-timer" id="liveTimer">00.0s</span>
-    </div>
-
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" id="progressFill"></div>
-    </div>
-
-    <div class="live-info-sub">
-      <span id="currentEffectLabel">Chưa kích hoạt hiệu ứng nào</span>
-      <span id="currentSoundLabel">Âm thanh: Chưa phát</span>
-      <span id="currentLoopLabel">Vòng lặp: -</span>
-    </div>
-  </div>
-
-  <!-- Lưới 4 Nút Bấm Hiệu Ứng -->
+  <!-- 4 HIỆU ỨNG ÁNH SÁNG SÂN KHẤU -->
   <div class="effects-grid">
-    <!-- Nút Hiệu Ứng 1 -->
+    <!-- Hiệu ứng 1 -->
     <div class="effect-card" id="cardE1">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span class="effect-badge badge-e1">Phím [1]</span>
-          <span style="font-size: 13px; color: #fbbf24;">Thời lượng: 26s</span>
+          <span style="font-size: 12px; color: #fbbf24;">26 giây</span>
         </div>
-        <h3>Hiệu ứng 1</h3>
-        <div class="effect-details" style="margin-top: 10px;">
-          <div class="detail-item">
-            <span>💡 101 ô chuyển đen, đèn sáng từ tâm ra 2 bên theo đường chéo</span>
-          </div>
-          <div class="detail-item">
-            <span>⏱️ Đến giây thứ 26: Toàn bộ 101 ô đồng loạt trở về màu trắng</span>
-          </div>
-          <div class="detail-item">
-            <span>🎵 Âm thanh: <span class="highlight">Opening.mp3</span></span>
-          </div>
-        </div>
+        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 1 (Opening)</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Sóng chéo lan tỏa từ tâm -> Giây 26 bật 101 ô trắng (Opening.mp3)</p>
       </div>
       <button class="btn-trigger btn-e1" onclick="triggerEffect(1)">
         ▶ KÍCH HOẠT HIỆU ỨNG 1
       </button>
     </div>
 
-    <!-- Nút Hiệu Ứng 2 -->
+    <!-- Hiệu ứng 2 -->
     <div class="effect-card" id="cardE2">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span class="effect-badge badge-e2">Phím [2]</span>
-          <span style="font-size: 13px; color: #c084fc;">Thời lượng: 40s</span>
+          <span style="font-size: 12px; color: #c084fc;">40 giây</span>
         </div>
-        <h3>Hiệu ứng 2</h3>
-        <div class="effect-details" style="margin-top: 10px;">
-          <div class="detail-item">
-            <span>💡 101 ô chuyển đen, đèn sáng từ tâm ra 2 bên theo đường chéo</span>
-          </div>
-          <div class="detail-item">
-            <span>⏱️ Đến giây thứ 40: Toàn bộ 101 ô đồng loạt trở về màu trắng</span>
-          </div>
-          <div class="detail-item">
-            <span>🎵 Âm thanh: <span class="highlight">Contestant.mp3</span></span>
-          </div>
-        </div>
+        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 2 (Contestant)</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Sóng chéo lan tỏa từ tâm -> Giây 40 bật 101 ô trắng (Contestant.mp3)</p>
       </div>
       <button class="btn-trigger btn-e2" onclick="triggerEffect(2)">
         ▶ KÍCH HOẠT HIỆU ỨNG 2
       </button>
     </div>
 
-    <!-- Nút Hiệu Ứng 3 -->
+    <!-- Hiệu ứng 3 -->
     <div class="effect-card" id="cardE3">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span class="effect-badge badge-e3">Phím [3]</span>
-          <span style="font-size: 13px; color: #60a5fa;">Thời lượng: 13s (Lặp 3.25s)</span>
+          <span style="font-size: 12px; color: #60a5fa;">13s (Lặp 1s)</span>
         </div>
-        <h3>Hiệu ứng 3</h3>
-        <div class="effect-details" style="margin-top: 10px;">
-          <div class="detail-item">
-            <span>💡 101 ô đổi sang đen, 2 đường ngang sáng từ trên quét xuống</span>
-          </div>
-          <div class="detail-item">
-            <span>🔄 Chạy vòng lặp 4 lần (mỗi vòng lặp đúng 3.25 giây)</span>
-          </div>
-          <div class="detail-item">
-            <span>🎵 Âm thanh: <span class="highlight">Judge_Vote.mp3</span></span>
-          </div>
-        </div>
+        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 3 (Judge Vote)</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">2 hàng ô liền kề quét xuống -> 13 vòng lặp (1s/vòng) -> 101 ô trắng (Judge_Vote.mp3)</p>
       </div>
       <button class="btn-trigger btn-e3" onclick="triggerEffect(3)">
         ▶ KÍCH HOẠT HIỆU ỨNG 3
       </button>
     </div>
 
-    <!-- Nút Hiệu Ứng 4 -->
+    <!-- Hiệu ứng 4 -->
     <div class="effect-card" id="cardE4">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span class="effect-badge badge-e4">Phím [4]</span>
-          <span style="font-size: 13px; color: #f87171;">Thời lượng: 5s (Lặp 1.25s)</span>
+          <span style="font-size: 12px; color: #f87171;">7s (Lặp 1s)</span>
         </div>
-        <h3>Hiệu ứng 4</h3>
-        <div class="effect-details" style="margin-top: 10px;">
-          <div class="detail-item">
-            <span>💡 101 ô đổi sang đen, 2 đường ngang sáng quét nhanh từ trên xuống</span>
-          </div>
-          <div class="detail-item">
-            <span>⚡ Chạy vòng lặp 4 lần (mỗi vòng lặp đúng 1.25 giây)</span>
-          </div>
-          <div class="detail-item">
-            <span>🎵 Âm thanh: <span class="highlight">Result.mp3</span></span>
-          </div>
-        </div>
+        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 4 (Result)</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">2 hàng ô liền kề quét nhanh -> 7 vòng lặp (1s/vòng) -> 101 ô trắng (Result.mp3)</p>
       </div>
       <button class="btn-trigger btn-e4" onclick="triggerEffect(4)">
         ▶ KÍCH HOẠT HIỆU ỨNG 4
@@ -594,61 +933,85 @@
       <button class="btn-aux" onclick="resetSeats('black')">
         ⚫ Tắt Đen 101 Ô
       </button>
+      <button class="btn-aux" onclick="clearStageDisplay()">
+        🧹 Xóa Hiển Thị Điểm / Tỉ Số
+      </button>
     </div>
 
-    <div style="font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-      <span>🔇 Âm thanh chỉ phát trên màn hình Sân khấu (index.html)</span>
+    <div style="font-size: 13px; color: #94a3b8;">
+      🔇 Controller luôn tắt âm thanh (Âm thanh chỉ phát trên Sân khấu index.html)
     </div>
   </div>
 
   <!-- Khung Xem Trực Tiếp Sân Khấu (Live Iframe Preview) -->
   <div class="preview-section">
-    <div class="preview-header">
-      <span>📺 Màn Hình Giám Sát Sân Khấu Trực Tiếp (Live Display Preview)</span>
-      <span style="font-size: 13px; color: #94a3b8;">Đồng bộ 1:1 với index.html</span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span>📺 Màn Hình Giám Sát Sân Khấu Trực Tiếp (index.html)</span>
+      <span style="font-size: 12px; color: #94a3b8;">Đồng bộ 1:1 thời gian thực</span>
     </div>
     <div class="preview-iframe-wrapper">
       <iframe src="/index.html?mode=preview&mute=1" id="stageIframe"></iframe>
     </div>
   </div>
 
-  <!-- Phím tắt hướng dẫn -->
-  <div class="hotkeys-guide">
-    <span>⌨️ Phím tắt nhanh:</span>
-    <span><span class="key-badge">1</span> Hiệu ứng 1</span>
-    <span><span class="key-badge">2</span> Hiệu ứng 2</span>
-    <span><span class="key-badge">3</span> Hiệu ứng 3</span>
-    <span><span class="key-badge">4</span> Hiệu ứng 4</span>
-    <span><span class="key-badge">Space</span> / <span class="key-badge">Esc</span> Dừng hiệu ứng</span>
+  <!-- MODAL POPUP NHẬP TỈ SỐ KHÁN GIẢ -->
+  <div class="modal-overlay" id="audienceModal">
+    <div class="modal-card">
+      <h2 class="modal-title">✏️ NHẬP TỈ SỐ KHÁN GIẢ</h2>
+
+      <div class="modal-inputs">
+        <div class="modal-input-group">
+          <label class="pink">💖 Màu hồng (Bên trái):</label>
+          <input type="number" class="modal-input pink" id="inputPinkScore" value="0" min="0" />
+        </div>
+
+        <div class="modal-input-group">
+          <label class="blue">🔷 Màu xanh (Bên phải):</label>
+          <input type="number" class="modal-input blue" id="inputBlueScore" value="0" min="0" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-save" onclick="saveAudienceScore()">
+          💾 LƯU TỈ SỐ
+        </button>
+        <button type="button" class="btn-modal-close" onclick="closeAudienceModal()">
+          ❌ ĐÓNG
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
     const statusDot = document.getElementById("statusDot");
     const connectionText = document.getElementById("connectionText");
-    const liveTag = document.getElementById("liveTag");
-    const liveTimer = document.getElementById("liveTimer");
-    const progressFill = document.getElementById("progressFill");
-    const currentEffectLabel = document.getElementById("currentEffectLabel");
-    const currentSoundLabel = document.getElementById("currentSoundLabel");
-    const currentLoopLabel = document.getElementById("currentLoopLabel");
+    const displayRoomCode = document.getElementById("displayRoomCode");
+    const votingStatusPill = document.getElementById("votingStatusPill");
 
-    const effectCards = {
-      1: document.getElementById("cardE1"),
-      2: document.getElementById("cardE2"),
-      3: document.getElementById("cardE3"),
-      4: document.getElementById("cardE4")
-    };
+    const statTotalVoted = document.getElementById("statTotalVoted");
+    const statChon = document.getElementById("statChon");
+    const statKhongChon = document.getElementById("statKhongChon");
+    const statHong = document.getElementById("statHong");
+    const statXanh = document.getElementById("statXanh");
+    const statAudience = document.getElementById("statAudience");
 
-    const EFFECT_META = {
-      1: { name: "Hiệu ứng 1 (Opening)", duration: 26, sound: "Opening.mp3", loop: null },
-      2: { name: "Hiệu ứng 2 (Contestant)", duration: 40, sound: "Contestant.mp3", loop: null },
-      3: { name: "Hiệu ứng 3 (Judge Vote)", duration: 13, sound: "Judge_Vote.mp3", loop: 3.25 },
-      4: { name: "Hiệu ứng 4 (Result)", duration: 5, sound: "Result.mp3", loop: 1.25 }
-    };
+    const audienceModal = document.getElementById("audienceModal");
+    const inputPinkScore = document.getElementById("inputPinkScore");
+    const inputBlueScore = document.getElementById("inputBlueScore");
+    const inputVersusPink = document.getElementById("inputVersusPink");
+    const inputVersusBlue = document.getElementById("inputVersusBlue");
+    const specificCountInput = document.getElementById("specificCountInput");
+    const specificInputsContainer = document.getElementById("specificInputsContainer");
+    const specificCountHint = document.getElementById("specificCountHint");
 
-    let activeRunningEffect = null;
-    let timerInterval = null;
-    let effectStartTimestamp = 0;
+    let currentRoomCode = "101101";
+    let currentVotingMode = "LOCKED";
+    let votesMap = {};
+    let savedAudienceScore = { pink: 0, blue: 0 };
+
+    let ws = null;
+    let clockSyncTimer = null;
+    let fallbackPollTimer = null;
     let serverTimeOffset = 0;
     let lastPingLatency = 0;
     let onlineClientsCount = 1;
@@ -674,23 +1037,44 @@
       }
     }
 
-    // 1. BroadcastChannel: Đồng bộ tức thì giữa các tab cùng trình duyệt
-    const bc = new BroadcastChannel("stage101_channel");
-    bc.onmessage = (e) => {
-      const data = e.data;
-      if (!data) return;
-      if (data.type === "TRIGGER_EFFECT") {
-        updateUIOnTrigger(Number(data.effect), data.serverStartTime);
-      } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
-        updateUIOnStop();
+    function updateVotingModeBadge(mode) {
+      currentVotingMode = mode;
+      if (mode === "NORMAL") {
+        votingStatusPill.className = "voting-status-pill normal";
+        votingStatusPill.textContent = "🟢 BÌNH CHỌN THƯỜNG (CHỌN / KHÔNG CHỌN)";
+      } else if (mode === "VERSUS") {
+        votingStatusPill.className = "voting-status-pill versus";
+        votingStatusPill.textContent = "⚡ BÌNH CHỌN ĐỐI ĐẦU (HỒNG / XANH)";
+      } else {
+        votingStatusPill.className = "voting-status-pill locked";
+        votingStatusPill.textContent = "🔒 ĐANG KHÓA";
       }
-    };
+    }
 
-    // 2. WebSocket kết nối Server NodeJS & Đồng bộ toàn cầu
-    let ws = null;
-    let clockSyncTimer = null;
-    let fallbackPollTimer = null;
+    function updateVoteStatistics(votes = {}) {
+      votesMap = votes;
+      let countChon = 0;
+      let countKhongChon = 0;
+      let countHong = 0;
+      let countXanh = 0;
 
+      Object.values(votes).forEach(v => {
+        if (v === "CHON") countChon++;
+        else if (v === "KHONG_CHON") countKhongChon++;
+        else if (v === "HONG") countHong++;
+        else if (v === "XANH") countXanh++;
+      });
+
+      const total = countChon + countKhongChon + countHong + countXanh;
+      statTotalVoted.textContent = `${total} / 101`;
+      statChon.textContent = countChon;
+      statKhongChon.textContent = countKhongChon;
+      statHong.textContent = countHong;
+      statXanh.textContent = countXanh;
+      statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+    }
+
+    // 1. WebSocket kết nối Server NodeJS
     function initWebSocket() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}/ws`;
@@ -728,15 +1112,38 @@
             updateConnectionBadge(true);
           }
 
-          if (msg.type === "EFFECT_TRIGGERED" && msg.state) {
-            updateUIOnTrigger(Number(msg.state.effect), msg.state.serverStartTime);
-          } else if (msg.type === "EFFECT_STOPPED" || msg.type === "RESET") {
-            updateUIOnStop();
-          } else if (msg.type === "STATE_SYNC" && msg.state && msg.state.action === "start") {
-            const elapsed = (getServerNow() - msg.state.serverStartTime) / 1000;
-            if (elapsed < msg.state.duration) {
-              updateUIOnTrigger(Number(msg.state.effect), msg.state.serverStartTime);
+          if (msg.type === "STATE_SYNC" && msg.state) {
+            if (msg.state.roomCode) {
+              currentRoomCode = msg.state.roomCode;
+              displayRoomCode.textContent = currentRoomCode;
             }
+            if (msg.state.voting) {
+              updateVotingModeBadge(msg.state.voting.mode || "LOCKED");
+              updateVoteStatistics(msg.state.voting.votes || {});
+            }
+            if (msg.state.audienceScore) {
+              savedAudienceScore = msg.state.audienceScore;
+              inputPinkScore.value = savedAudienceScore.pink;
+              inputBlueScore.value = savedAudienceScore.blue;
+              statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+            }
+          } else if (msg.type === "ROOM_UPDATED") {
+            currentRoomCode = msg.roomCode;
+            displayRoomCode.textContent = currentRoomCode;
+            if (msg.voting) {
+              updateVotingModeBadge(msg.voting.mode);
+              updateVoteStatistics(msg.voting.votes);
+            }
+          } else if (msg.type === "VOTING_MODE_CHANGED") {
+            updateVotingModeBadge(msg.mode);
+            if (msg.voting) {
+              updateVoteStatistics(msg.voting.votes);
+            }
+          } else if (msg.type === "VOTE_CAST" && msg.voting) {
+            updateVoteStatistics(msg.voting.votes);
+          } else if (msg.type === "AUDIENCE_SCORE_UPDATED" && msg.audienceScore) {
+            savedAudienceScore = msg.audienceScore;
+            statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
           }
         } catch (err) {
           console.error("WS Parse error:", err);
@@ -767,13 +1174,19 @@
           if (data.clientsCount !== undefined) {
             onlineClientsCount = data.clientsCount;
           }
-          if (data.state && data.state.action === "start") {
-            const elapsed = (getServerNow() - data.state.serverStartTime) / 1000;
-            if (elapsed < data.state.duration && activeRunningEffect !== data.state.effect) {
-              updateUIOnTrigger(Number(data.state.effect), data.state.serverStartTime);
+          if (data.state) {
+            if (data.state.roomCode) {
+              currentRoomCode = data.state.roomCode;
+              displayRoomCode.textContent = currentRoomCode;
             }
-          } else if (data.state && (data.state.action === "stop" || data.state.action === "reset") && activeRunningEffect !== null) {
-            updateUIOnStop();
+            if (data.state.voting) {
+              updateVotingModeBadge(data.state.voting.mode || "LOCKED");
+              updateVoteStatistics(data.state.voting.votes || {});
+            }
+            if (data.state.audienceScore) {
+              savedAudienceScore = data.state.audienceScore;
+              statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+            }
           }
         }
       } catch (e) {}
@@ -781,97 +1194,247 @@
 
     initWebSocket();
 
-    // Mở màn hình sân khấu trong tab mới hoặc popup
-    function openStageWindow() {
-      window.open("/index.html", "StageDisplay", "width=1280,height=720,menubar=no,toolbar=no");
+    // BroadcastChannel cục bộ
+    const bc = new BroadcastChannel("stage101_channel");
+
+    // Quản lý Mã Phòng
+    function createNewRoom() {
+      if (!confirm("Tạo mã phòng mới? (Các Giám Khảo sẽ cần nhập mã mới để vào bình chọn)")) return;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "CREATE_ROOM" }));
+      }
+      fetch("/api/room/create", { method: "POST" }).then(res => res.json()).then(data => {
+        if (data.roomCode) {
+          currentRoomCode = data.roomCode;
+          displayRoomCode.textContent = currentRoomCode;
+        }
+      }).catch(() => {});
     }
 
-    // Phát âm thanh trên controller nếu được bật
-    // Cập nhật giao diện Controller khi kích hoạt (Controller không phát âm thanh)
-    function updateUIOnTrigger(effectNum, explicitStartTime = null) {
-      activeRunningEffect = effectNum;
-      const meta = EFFECT_META[effectNum];
-      if (!meta) return;
+    function copyJudgeLink() {
+      const url = `${window.location.origin}/Judge.html?roomid=${currentRoomCode}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Đã copy link Giám Khảo: ${url}`);
+      }).catch(() => {
+        prompt("Link Giám Khảo:", url);
+      });
+    }
 
-      // Đánh dấu thẻ nút đang kích hoạt
-      Object.entries(effectCards).forEach(([num, card]) => {
-        if (Number(num) === effectNum) {
-          card.classList.add("active-running");
-        } else {
-          card.classList.remove("active-running");
+    // Điều khiển Chế độ Bình Chọn
+    function setVotingMode(mode) {
+      updateVotingModeBadge(mode);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SET_VOTING_MODE", mode }));
+      }
+      fetch("/api/voting/mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode })
+      }).catch(() => {});
+    }
+
+    // Hiển thị kết quả lên Sân khấu
+    function showNormalResult() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SHOW_NORMAL_RESULT" }));
+      }
+      bc.postMessage({ type: "SHOW_NORMAL_RESULT" });
+      fetch("/api/display/normal", { method: "POST" }).catch(() => {});
+    }
+
+    function showVersusResult() {
+      const pinkVal = inputVersusPink.value.trim();
+      const blueVal = inputVersusBlue.value.trim();
+      const payload = {
+        type: "SHOW_VERSUS_RESULT",
+      };
+      if (pinkVal !== "") payload.pinkScore = Number(pinkVal);
+      if (blueVal !== "") payload.blueScore = Number(blueVal);
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+      bc.postMessage(payload);
+      fetch("/api/display/versus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    function showReferenceScore() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SHOW_REFERENCE_SCORE" }));
+      }
+      bc.postMessage({ type: "SHOW_REFERENCE_SCORE" });
+      fetch("/api/display/reference", { method: "POST" }).catch(() => {});
+    }
+
+    function showAudienceScore() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SHOW_AUDIENCE_SCORE" }));
+      }
+      bc.postMessage({ type: "SHOW_AUDIENCE_SCORE" });
+      fetch("/api/display/audience", { method: "POST" }).catch(() => {});
+    }
+
+    // Các hàm Reset Điểm & Tỉ Số
+    function resetStageScore() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "RESET_SCORE" }));
+      }
+      bc.postMessage({ type: "RESET_SCORE" });
+      fetch("/api/display/reset-score", { method: "POST" }).catch(() => {});
+    }
+
+    function resetReferenceScore() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "RESET_REFERENCE_SCORE" }));
+      }
+      bc.postMessage({ type: "RESET_REFERENCE_SCORE" });
+      fetch("/api/display/reset-ref-score", { method: "POST" }).catch(() => {});
+    }
+
+    function resetAudienceScore() {
+      savedAudienceScore = { pink: 0, blue: 0 };
+      statAudience.textContent = "0 - 0";
+      inputPinkScore.value = 0;
+      inputBlueScore.value = 0;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "RESET_AUDIENCE_SCORE" }));
+      }
+      bc.postMessage({ type: "RESET_AUDIENCE_SCORE" });
+      fetch("/api/display/reset-audience-score", { method: "POST" }).catch(() => {});
+    }
+
+    function clearStageDisplay() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "CLEAR_STAGE_DISPLAY" }));
+      }
+      bc.postMessage({ type: "CLEAR_STAGE_DISPLAY" });
+      fetch("/api/display/clear", { method: "POST" }).catch(() => {});
+    }
+
+    // Xử lý mục: Hiện sự bình chọn của giám khảo bất kỳ
+    function onSpecificCountChange() {
+      const rawVal = parseInt(specificCountInput.value, 10);
+      if (isNaN(rawVal) || rawVal <= 0) {
+        specificInputsContainer.innerHTML = "";
+        specificInputsContainer.style.display = "none";
+        specificCountHint.textContent = "Nhập số để tự động sinh các ô nhập vị trí bên dưới.";
+        return;
+      }
+
+      const count = Math.min(Math.max(rawVal, 1), 101);
+      specificCountInput.value = count;
+      specificCountHint.textContent = `Đang tạo ${count} ô nhập vị trí (1 - 101). Hãy điền vị trí từng ghế cần mở:`;
+
+      // Giữ lại các giá trị đã nhập trước đó nếu có
+      const existingValues = [];
+      const currentInputs = specificInputsContainer.querySelectorAll(".specific-seat-val");
+      currentInputs.forEach(inp => {
+        if (inp.value) existingValues.push(inp.value);
+      });
+
+      specificInputsContainer.innerHTML = "";
+      specificInputsContainer.style.display = "grid";
+
+      for (let i = 0; i < count; i++) {
+        const item = document.createElement("div");
+        item.className = "specific-seat-item";
+
+        const lbl = document.createElement("label");
+        lbl.textContent = `Ô thứ ${i + 1}:`;
+
+        const inp = document.createElement("input");
+        inp.type = "number";
+        inp.className = "specific-seat-val";
+        inp.min = 1;
+        inp.max = 101;
+        inp.placeholder = `Ghế ${i + 1}`;
+        if (existingValues[i]) {
+          inp.value = existingValues[i];
+        }
+
+        item.appendChild(lbl);
+        item.appendChild(inp);
+        specificInputsContainer.appendChild(item);
+      }
+    }
+
+    function confirmSpecificJudges() {
+      const inputs = specificInputsContainer.querySelectorAll(".specific-seat-val");
+      const judgeIds = [];
+
+      inputs.forEach(inp => {
+        const val = parseInt(inp.value, 10);
+        if (!isNaN(val) && val >= 1 && val <= 101) {
+          if (!judgeIds.includes(val)) {
+            judgeIds.push(val);
+          }
         }
       });
 
-      effectStartTimestamp = explicitStartTime || getServerNow();
-      liveTag.textContent = `ĐANG CHẠY: ${meta.name.toUpperCase()}`;
-      liveTag.style.color = "#ffd269";
-      currentEffectLabel.textContent = `Hiệu ứng: ${meta.name}`;
-      currentSoundLabel.textContent = `Nhạc phát trên Sân khấu: ${meta.sound}`;
-
-      if (timerInterval) clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        const now = getServerNow();
-        const elapsed = (now - effectStartTimestamp) / 1000;
-        const total = meta.duration;
-
-        if (elapsed >= total) {
-          clearInterval(timerInterval);
-          timerInterval = null;
-          liveTimer.textContent = `${total.toFixed(1)}s / ${total}s`;
-          progressFill.style.width = "100%";
-          liveTag.textContent = `HOÀN TẤT -> 101 Ô TRẮNG`;
-          liveTag.style.color = "#10b981";
-          currentEffectLabel.textContent = `${meta.name} (Đã xong - 101 Ô Trắng)`;
-          Object.values(effectCards).forEach(card => card.classList.remove("active-running"));
-          return;
-        }
-
-        const pct = (elapsed / total) * 100;
-        progressFill.style.width = `${pct}%`;
-        liveTimer.textContent = `${elapsed.toFixed(1)}s / ${total}s`;
-
-        if (meta.loop) {
-          const loopCount = Math.round(total / meta.loop);
-          const currentLoop = Math.min(loopCount, Math.floor(elapsed / meta.loop) + 1);
-          currentLoopLabel.textContent = `Vòng lặp: ${currentLoop}/${loopCount} (Chu kỳ ${meta.loop}s)`;
-        } else {
-          currentLoopLabel.textContent = `Sóng chéo lan tỏa`;
-        }
-      }, 50);
-    }
-
-    function updateUIOnStop() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+      if (judgeIds.length === 0) {
+        alert("Vui lòng nhập ít nhất một vị trí ghế hợp lệ từ 1 đến 101 vào các ô!");
+        return;
       }
-      activeRunningEffect = null;
 
-      Object.values(effectCards).forEach(card => card.classList.remove("active-running"));
-      liveTag.textContent = "TRẠNG THÁI: ĐÃ DỪNG";
-      liveTag.style.color = "#ef4444";
-      liveTimer.textContent = "00.0s";
-      progressFill.style.width = "0%";
-      currentEffectLabel.textContent = "Đã dừng hiệu ứng";
-      currentSoundLabel.textContent = "Âm thanh Sân khấu: Đã tắt";
-      currentLoopLabel.textContent = "Vòng lặp: -";
+      const payload = {
+        type: "SHOW_SPECIFIC_JUDGES",
+        judgeIds,
+        votes: votesMap
+      };
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+      bc.postMessage(payload);
+      fetch("/api/display/specific-judges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+
+      alert(`Đã gửi lệnh hiển thị bình chọn của ${judgeIds.length} giám khảo (Vị trí: ${judgeIds.join(", ")}) lên màn hình Sân khấu index.html!`);
     }
 
-    // Kích hoạt Hiệu ứng và gửi tới Server + BroadcastChannel + REST
+    // Modal Nhập Tỉ Số Khán Giả
+    function openAudienceModal() {
+      inputPinkScore.value = savedAudienceScore.pink;
+      inputBlueScore.value = savedAudienceScore.blue;
+      audienceModal.style.display = "flex";
+    }
+
+    function closeAudienceModal() {
+      audienceModal.style.display = "none";
+    }
+
+    function saveAudienceScore() {
+      const pink = Number(inputPinkScore.value) || 0;
+      const blue = Number(inputBlueScore.value) || 0;
+      savedAudienceScore = { pink, blue };
+      statAudience.textContent = `${pink} - ${blue}`;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SET_AUDIENCE_SCORE", pink, blue }));
+      }
+      fetch("/api/audience/set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pink, blue })
+      }).catch(() => {});
+
+      closeAudienceModal();
+    }
+
+    // Kích hoạt 4 Hiệu ứng ánh sáng sân khấu
     function triggerEffect(effectNum) {
       console.log(`[Controller] Kích hoạt Hiệu ứng ${effectNum}`);
-      updateUIOnTrigger(effectNum);
-
-      // 1. BroadcastChannel (tức thì nội bộ)
       bc.postMessage({ type: "TRIGGER_EFFECT", effect: effectNum });
-
-      // 2. WebSocket
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "TRIGGER_EFFECT", effect: effectNum }));
       }
-
-      // 3. REST API Fallback
       fetch("/api/trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -880,52 +1443,31 @@
     }
 
     function stopEffect() {
-      console.log("[Controller] Dừng hiệu ứng");
-      updateUIOnStop();
-
       bc.postMessage({ type: "STOP_EFFECT" });
-
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "STOP_EFFECT" }));
       }
-
       fetch("/api/stop", { method: "POST" }).catch(() => {});
     }
 
     function resetSeats(mode) {
-      updateUIOnStop();
-      liveTag.textContent = mode === "white" ? "TRẠNG THÁI: 101 Ô TRẮNG" : "TRẠNG THÁI: 101 Ô ĐEN";
-      liveTag.style.color = mode === "white" ? "#ffffff" : "#94a3b8";
-
       bc.postMessage({ type: "RESET", mode });
-
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "RESET", mode }));
       }
-
-      fetch("/api/reset", { method: "POST" }).catch(() => {});
+      fetch("/api/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode })
+      }).catch(() => {});
     }
 
-    // Cập nhật đường link hiển thị theo domain thực tế (hỗ trợ thewinneris.onrender.com)
-    const baseOrigin = window.location.origin;
-    const linkStageDisplay = document.getElementById("linkStageDisplay");
-    const linkController = document.getElementById("linkController");
-    if (linkStageDisplay && linkController) {
-      const stageUrl = `${baseOrigin}/index.html`;
-      const ctrlUrl = `${baseOrigin}/Controller.html`;
-      linkStageDisplay.href = stageUrl;
-      linkStageDisplay.textContent = stageUrl;
-      linkController.href = ctrlUrl;
-      linkController.textContent = ctrlUrl;
+    function openStageWindow() {
+      window.open("/index.html", "StageDisplay", "width=1280,height=720,menubar=no,toolbar=no");
     }
 
-    function copyLink(type) {
-      const url = type === "stage" ? `${baseOrigin}/index.html` : `${baseOrigin}/Controller.html`;
-      navigator.clipboard.writeText(url).then(() => {
-        alert(`Đã sao chép link: ${url}`);
-      }).catch(() => {
-        prompt("Sao chép đường link:", url);
-      });
+    function openJudgeWindow() {
+      window.open(`/Judge.html?roomid=${currentRoomCode}`, "JudgeScreen", "width=480,height=700,menubar=no,toolbar=no");
     }
 
     // Phím tắt bàn phím

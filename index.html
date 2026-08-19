@@ -4,7 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sân Khấu 101 Ô Khán Giả - Stage Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'SFAlienEncountersSolid';
+      src: url('/SFAlienEncountersSolid.ttf') format('truetype'),
+           url('/fonts/SFAlienEncountersSolid.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -218,18 +230,6 @@
       z-index: 10;
     }
 
-    /* Trạng thái sáng neon tím/xanh chuẩn sân khấu hiệu ứng 3 & 4 */
-    .seat.is-cyan-lit {
-      background: linear-gradient(180deg, #ffffff 0%, #e0f8ff 45%, #6fe7ff 100%) !important;
-      border-color: #ffffff !important;
-      box-shadow:
-        0 0 24px rgba(111, 231, 255, 1),
-        0 0 45px rgba(0, 190, 255, 0.85),
-        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
-      transform: translate(-50%, -50%) scale(1.04);
-      z-index: 10;
-    }
-
     /* Trạng thái sáng trắng đồng loạt */
     .seat.is-white {
       background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 70%, #dfe4f7 100%) !important;
@@ -241,72 +241,106 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* HUD hiển thị trạng thái góc trên bên phải */
-    .hud-overlay {
-      position: absolute;
-      top: 18px;
-      right: 22px;
-      z-index: 30;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 13px;
-      color: #cbd5e1;
-      background: rgba(4, 9, 36, 0.85);
-      backdrop-filter: blur(10px);
-      padding: 8px 16px;
-      border-radius: 9999px;
-      border: 1px solid rgba(112, 61, 255, 0.4);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-      user-select: none;
-    }
-    .hud-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-    }
-    .hud-dot.disconnected {
-      background: #ef4444;
-      box-shadow: 0 0 8px #ef4444;
-    }
-    .hud-effect-badge {
-      font-weight: 700;
-      color: #ffd269;
-      letter-spacing: 0.5px;
-    }
-    .hud-timer {
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-      color: #38bdf8;
+    /* Trạng thái Chọn: Màu xanh lá */
+    .seat.is-green-lit {
+      background: linear-gradient(180deg, #ffffff 0%, #bbf7d0 35%, #22c55e 100%) !important;
+      border-color: #4ade80 !important;
+      box-shadow:
+        0 0 25px rgba(34, 197, 94, 1),
+        0 0 50px rgba(34, 197, 94, 0.8),
+        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
+      transform: translate(-50%, -50%) scale(1.05);
+      z-index: 12;
     }
 
-    /* Banner kích hoạt âm thanh khi trình duyệt chặn autoplay */
-    .audio-unlock-modal {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 99;
-      background: linear-gradient(135deg, #1e1b4b, #312e81);
-      border: 1px solid #818cf8;
-      border-radius: 12px;
-      padding: 12px 24px;
-      color: white;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.5);
+    /* Trạng thái Đối đầu: Màu hồng */
+    .seat.is-pink-lit {
+      background: linear-gradient(180deg, #ffffff 0%, #fbcfe8 35%, #ec4899 100%) !important;
+      border-color: #f472b6 !important;
+      box-shadow:
+        0 0 25px rgba(236, 72, 153, 1),
+        0 0 50px rgba(236, 72, 153, 0.8),
+        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
+      transform: translate(-50%, -50%) scale(1.05);
+      z-index: 12;
+    }
+
+    /* Trạng thái Đối đầu: Màu xanh dương */
+    .seat.is-blue-lit {
+      background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 35%, #3b82f6 100%) !important;
+      border-color: #60a5fa !important;
+      box-shadow:
+        0 0 25px rgba(59, 130, 246, 1),
+        0 0 50px rgba(59, 130, 246, 0.8),
+        inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
+      transform: translate(-50%, -50%) scale(1.05);
+      z-index: 12;
+    }
+
+    /* VỊ TRÍ TRUNG TÂM Ở HÀNG 2 HIỂN THỊ TỈ SỐ VÀ SỐ ĐIỂM */
+    /* Tọa độ tâm Hàng 2: x = 960px, y = 236px */
+    .center-stage-score {
+      position: absolute;
+      left: 960px;
+      top: 236px;
+      transform: translate(-50%, -50%);
+      z-index: 25;
+      pointer-events: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-family: 'SFAlienEncountersSolid', 'Orbitron', 'Chakra Petch', monospace, sans-serif;
+      text-shadow: 0 0 25px currentColor;
+      user-select: none;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    /* Số điểm (Hiện kết quả thường): Chữ màu xanh lá */
+    .score-single-number {
+      font-size: 80px;
+      color: #22c55e;
+      text-shadow: 0 0 25px rgba(34, 197, 94, 0.95), 0 0 50px rgba(34, 197, 94, 0.7);
+      letter-spacing: 2px;
+      font-weight: 900;
+    }
+
+    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Màu hồng bên trái, Màu xanh bên phải */
+    .score-pair {
       display: flex;
       align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      animation: bounce 2s infinite ease-in-out;
-      font-weight: 600;
-      font-size: 14px;
+      gap: 20px;
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: 3px;
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      50% { transform: translateX(-50%) translateY(-6px); }
+
+    .score-pink {
+      color: #ec4899;
+      text-shadow: 0 0 25px rgba(236, 72, 153, 0.95), 0 0 50px rgba(236, 72, 153, 0.7);
+      min-width: 80px;
+      text-align: right;
     }
+
+    .score-divider {
+      color: #ffffff;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+      font-size: 60px;
+      opacity: 0.85;
+    }
+
+    .score-blue {
+      color: #3b82f6;
+      text-shadow: 0 0 25px rgba(59, 130, 246, 0.95), 0 0 50px rgba(59, 130, 246, 0.7);
+      min-width: 80px;
+      text-align: left;
+    }
+
   </style>
 </head>
 
@@ -328,28 +362,15 @@
     <!-- Container chứa đúng 101 ô -->
     <div id="audience"></div>
 
+    <!-- Tỉ Số & Điểm Trung Tâm Hàng 2 (x=960px, y=236px) -->
+    <div class="center-stage-score" id="centerStageScore"></div>
+
     <!-- Sàn trung tâm -->
     <div class="floor">
       <i class="line l1"></i><i class="line l2"></i>
       <i class="line l3"></i><i class="line l4"></i>
       <i class="line l5"></i><i class="line l6"></i>
     </div>
-
-    <!-- HUD Thông tin trạng thái & Nút liên kết Controller -->
-    <div class="hud-overlay" id="hudOverlay">
-      <span class="hud-dot" id="hudDot"></span>
-      <span id="hudStatus">Sẵn sàng (101 Ô)</span>
-      <span class="hud-effect-badge" id="hudEffectName"></span>
-      <span class="hud-timer" id="hudTimer"></span>
-      <a href="/Controller.html" target="_blank" style="color: #c084fc; text-decoration: none; font-weight: 700; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; margin-left: 4px; display: inline-flex; align-items: center; gap: 4px;">
-        🎛️ Controller
-      </a>
-    </div>
-  </div>
-
-  <!-- Audio Prompt nếu trình duyệt chặn phát tự động -->
-  <div class="audio-unlock-modal" id="audioUnlockModal" style="display: none;">
-    <span>🎵 Nhấn để bật âm thanh sân khấu</span>
   </div>
 
   <!-- Audio Elements -->
@@ -361,11 +382,7 @@
   <script>
     // --- KHỞI TẠO TỌA ĐỘ VÀ DOM CHO ĐÚNG 101 Ô ---
     const audience = document.getElementById("audience");
-    const hudDot = document.getElementById("hudDot");
-    const hudStatus = document.getElementById("hudStatus");
-    const hudEffectName = document.getElementById("hudEffectName");
-    const hudTimer = document.getElementById("hudTimer");
-    const audioUnlockModal = document.getElementById("audioUnlockModal");
+    const centerStageScore = document.getElementById("centerStageScore");
 
     const audioElements = {
       1: document.getElementById("audioOpening"),
@@ -379,77 +396,92 @@
     const isMuted = window.self !== window.top || urlParams.get("mute") === "1";
 
     // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
+    // Quy tắc đánh số: Vị trí trung tâm ở hàng 6 là vị trí 101; các ô còn lại là 1 - 100 (từ trái qua phải, từ trên xuống dưới)
     const rows = [
-      // Hàng 1: 5 + 5 = 10
+      // Hàng 1: 5 + 5 = 10 ô (ID 1 -> 10)
       { rowIndex: 0, y: 186, xs: [194, 277.5, 361, 444.5, 528], right: [1399, 1484, 1576, 1668, 1766] },
-      // Hàng 2: 5 + 5 = 10
+      // Hàng 2: 5 + 5 = 10 ô (ID 11 -> 20)
       { rowIndex: 1, y: 236, xs: [207, 301, 387, 485, 566], right: [1352, 1440, 1534, 1628, 1719] },
-      // Hàng 3: 5 + 5 = 10
+      // Hàng 3: 5 + 5 = 10 ô (ID 21 -> 30)
       { rowIndex: 2, y: 288, xs: [233, 333, 423, 517, 604], right: [1310, 1407, 1508, 1602, 1695] },
-      // Hàng 4: 7 + 7 = 14
+      // Hàng 4: 7 + 7 = 14 ô (ID 31 -> 44)
       { rowIndex: 3, y: 350, xs: [257, 363, 458, 551, 643, 791, 888], right: [1039, 1124, 1288, 1383, 1486, 1576, 1673] },
-      // Hàng 5: 8 + 8 = 16
+      // Hàng 5: 8 + 8 = 16 ô (ID 45 -> 60)
       { rowIndex: 4, y: 404, xs: [279, 386, 483, 579, 671, 759, 839, 921], right: [1007, 1104, 1196, 1285, 1374, 1461, 1545, 1649] },
-      // Hàng 6: 6 + 1(center) + 6 = 13
+      // Hàng 6: 6 bên trái (ID 61 -> 66) + 1 trung tâm (ID 101) + 6 bên phải (ID 67 -> 72)
       { rowIndex: 5, y: 466, xs: [311, 423, 530, 625, 727, 824], center: 972, right: [1109, 1220, 1323, 1418, 1518, 1621] },
-      // Hàng 7: 5 + 5 = 10
+      // Hàng 7: 5 + 5 = 10 ô (ID 73 -> 82)
       { rowIndex: 6, y: 536, xs: [342, 455, 570, 658, 774], right: [1163, 1274, 1375, 1484, 1591] },
-      // Hàng 8: 4 + 4 = 8
+      // Hàng 8: 4 + 4 = 8 ô (ID 83 -> 90)
       { rowIndex: 7, y: 610, xs: [373, 492, 608, 717], right: [1238, 1352, 1454, 1565] },
-      // Hàng 9: 3 + 3 = 6
+      // Hàng 9: 3 + 3 = 6 ô (ID 91 -> 96)
       { rowIndex: 8, y: 700, xs: [406, 531, 657], right: [1293, 1417, 1540] },
-      // Hàng 10: 2 + 2 = 4
+      // Hàng 10: 2 + 2 = 4 ô (ID 97 -> 100)
       { rowIndex: 9, y: 785, xs: [442, 577], right: [1367, 1504] }
     ];
 
     const seats = [];
+    const seatsById = {};
     const STAGE_CENTER_X = 960;
     const STAGE_CENTER_Y = 466;
-    const MIN_Y = 186;
-    const MAX_Y = 785;
 
-    // Tạo các ô khán giả
+    function createSeatElement(id, x, y, rowIndex, side) {
+      const el = document.createElement("div");
+      el.className = "seat";
+      el.dataset.id = id;
+      el.style.setProperty("--x", `${x}px`);
+      el.style.setProperty("--y", `${y}px`);
+      audience.appendChild(el);
+
+      const dx = Math.abs(x - STAGE_CENTER_X);
+      const dy = Math.abs(y - STAGE_CENTER_Y);
+      const diagDist = Math.sqrt(dx * dx + (dy * 1.5) * (dy * 1.5));
+
+      const seatObj = {
+        id,
+        el,
+        x,
+        y,
+        rowIndex,
+        dx,
+        dy,
+        diagDist,
+        side
+      };
+      seats.push(seatObj);
+      seatsById[id] = seatObj;
+    }
+
+    let regularCounter = 1;
     rows.forEach(row => {
-      const allXsInRow = [...row.xs];
-      if (row.center !== undefined) allXsInRow.push(row.center);
-      allXsInRow.push(...row.right);
+      // Nhóm bên trái theo thứ tự X tăng dần
+      const sortedLeft = [...row.xs].sort((a, b) => a - b);
+      sortedLeft.forEach(x => {
+        const id = regularCounter++;
+        createSeatElement(id, x, row.y, row.rowIndex, "left");
+      });
 
-      allXsInRow.forEach(x => {
-        const el = document.createElement("div");
-        el.className = "seat";
-        el.style.setProperty("--x", `${x}px`);
-        el.style.setProperty("--y", `${row.y}px`);
-        audience.appendChild(el);
+      // Ô trung tâm ở hàng 6: luôn là vị trí 101
+      if (row.center !== undefined) {
+        createSeatElement(101, row.center, row.y, row.rowIndex, "center");
+      }
 
-        // Tính khoảng cách và góc chéo từ tâm (dành cho Hiệu ứng 1 & 2)
-        const dx = Math.abs(x - STAGE_CENTER_X);
-        const dy = Math.abs(row.y - STAGE_CENTER_Y);
-        // Đường chéo: kết hợp độ lệch ngang và dọc
-        const diagDist = Math.sqrt(dx * dx + (dy * 1.5) * (dy * 1.5));
-        const side = x < STAGE_CENTER_X ? "left" : (x > STAGE_CENTER_X ? "right" : "center");
-
-        seats.push({
-          el,
-          x,
-          y: row.y,
-          rowIndex: row.rowIndex,
-          dx,
-          dy,
-          diagDist,
-          side
-        });
+      // Nhóm bên phải theo thứ tự X tăng dần
+      const sortedRight = [...row.right].sort((a, b) => a - b);
+      sortedRight.forEach(x => {
+        const id = regularCounter++;
+        createSeatElement(id, x, row.y, row.rowIndex, "right");
       });
     });
 
-    console.log(`Đã khởi tạo thành công ${seats.length} ô khán giả trên sân khấu.`);
+    // Sắp xếp danh sách seats theo đúng thứ tự ID 1 -> 101 để hiện kết quả tuần tự
+    seats.sort((a, b) => a.id - b.id);
+
+    console.log(`Đã khởi tạo thành công ${seats.length} ô khán giả (ID từ 1 đến 101).`);
 
     // --- HỆ THỐNG ÂM THANH SÂN KHẤU (CHỈ 4 FILE ĐÃ ĐỊNH NGHĨA) ---
-    // 1. Opening.mp3 (Hiệu ứng 1)
-    // 2. Contestant.mp3 (Hiệu ứng 2)
-    // 3. Judge_Vote.mp3 (Hiệu ứng 3)
-    // 4. Result.mp3 (Hiệu ứng 4)
-    function playAudio(effectNum, duration) {
-      if (isMuted) return; // Không phát âm thanh nếu ở trong iframe / chế độ mute trên Controller
+    function playAudio(effectNum) {
+      if (isMuted) return;
       stopAllAudio();
       const audioEl = audioElements[effectNum];
 
@@ -457,13 +489,8 @@
         audioEl.currentTime = 0;
         const playPromise = audioEl.play();
         if (playPromise !== undefined) {
-          playPromise.then(() => {
-            audioUnlockModal.style.display = "none";
-          }).catch(err => {
-            console.warn(`[Audio] Trình duyệt chặn tự động phát âm thanh (${audioEl.src}):`, err);
-            if (!isMuted) {
-              audioUnlockModal.style.display = "flex";
-            }
+          playPromise.catch(err => {
+            console.warn(`[Audio] Trình duyệt chưa cho phép tự động phát âm thanh (${audioEl.src}):`, err);
           });
         }
       }
@@ -478,28 +505,7 @@
       });
     }
 
-    // Bấm vào màn hình hoặc banner để mở khóa phát âm thanh trình duyệt
-    audioUnlockModal.addEventListener("click", () => {
-      audioUnlockModal.style.display = "none";
-      if (!isMuted && currentEffectState.effect) {
-        const audioEl = audioElements[currentEffectState.effect];
-        if (audioEl) {
-          audioEl.play().catch(() => {});
-        }
-      }
-    });
-
-    document.addEventListener("click", () => {
-      if (!isMuted && audioUnlockModal.style.display === "flex" && currentEffectState.effect) {
-        audioUnlockModal.style.display = "none";
-        const audioEl = audioElements[currentEffectState.effect];
-        if (audioEl) {
-          audioEl.play().catch(() => {});
-        }
-      }
-    }, { once: true });
-
-    // --- ĐỒNG BỘ THỜI GIAN CHUẨN TOÀN CẦU (NTP SERVER OFFSET CLOCK SYNC) ---
+    // --- ĐỒNG BỘ THỜI GIAN CHUẨN TOÀN CẦU (NTP CLOCK SYNC) ---
     let serverTimeOffset = 0;
     let lastPingLatency = 0;
     let onlineClientsCount = 1;
@@ -515,15 +521,28 @@
       }
     }
 
-    // --- ANIMATION ENGINE CHÍNH CHO 4 HIỆU ỨNG (CHUẨN TỌA ĐỘ VÀ THỜI GIAN SERVER) ---
+    // --- ANIMATION ENGINE & STAGE DISPLAY ---
     let currentAnimationId = null;
     let currentEffectState = { effect: null, duration: 0, loopDuration: 0, serverStartTime: 0 };
+    let referenceSwapInterval = null;
+    let sequentialRevealTimer = null;
 
     function resetAllSeats(mode = "white") {
       if (currentAnimationId) {
         cancelAnimationFrame(currentAnimationId);
         currentAnimationId = null;
       }
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
+      if (sequentialRevealTimer) {
+        clearInterval(sequentialRevealTimer);
+        sequentialRevealTimer = null;
+      }
+
+      centerStageScore.style.display = "none";
+      centerStageScore.innerHTML = "";
 
       seats.forEach(s => {
         s.el.className = "seat";
@@ -533,10 +552,6 @@
           s.el.classList.add("is-black");
         }
       });
-
-      hudEffectName.textContent = "";
-      hudTimer.textContent = "";
-      hudStatus.textContent = mode === "white" ? "Sẵn sàng (101 Ô Trắng)" : "Chế độ Tắt (Đen)";
     }
 
     // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s): Sóng chéo lan tỏa từ tâm ra 2 bên
@@ -545,16 +560,9 @@
       const startTimestamp = explicitServerStartTime || getServerNow();
       currentEffectState = { effect: effectNum, duration: totalDuration, serverStartTime: startTimestamp };
 
-      const effectNames = {
-        1: "Hiệu ứng 1 (Opening - 26s)",
-        2: "Hiệu ứng 2 (Contestant - 40s)"
-      };
-      hudEffectName.textContent = effectNames[effectNum];
-
       const wavePeriod = effectNum === 1 ? 2.6 : 3.2;
       const maxDiag = 900;
 
-      // Đồng bộ thời gian phát audio với độ trôi
       const audioEl = audioElements[effectNum];
       if (audioEl && !isMuted) {
         const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
@@ -572,20 +580,14 @@
           seats.forEach(s => {
             s.el.className = "seat is-white";
           });
-          hudStatus.textContent = `Hoàn thành (${totalDuration}s) -> 101 Ô Trắng`;
-          hudTimer.textContent = `${totalDuration.toFixed(1)}s / ${totalDuration}s`;
           currentAnimationId = null;
           return;
         }
 
         if (elapsed < 0) {
-          // Trường hợp máy khách chạy sớm hơn một chút, chờ đúng thời điểm server
           currentAnimationId = requestAnimationFrame(animate);
           return;
         }
-
-        hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s`;
-        hudStatus.textContent = `Đang chạy sóng chéo từ tâm`;
 
         const cycleProgress = (elapsed % wavePeriod) / wavePeriod;
         const currentFront = cycleProgress * (maxDiag + 200);
@@ -608,17 +610,11 @@
       currentAnimationId = requestAnimationFrame(animate);
     }
 
-    // Hiệu ứng 3 (13s, loop 3.25s) & Hiệu ứng 4 (5s, loop 1.25s): 2 hàng ô sáng ngang di chuyển từ trên xuống dưới theo vòng lặp
-    function runHorizontalScanEffect(effectNum, totalDuration, loopDuration, explicitServerStartTime = null) {
+    // Hiệu ứng 3 (13s, loop 1.0s) & Hiệu ứng 4 (7s, loop 1.0s): 2 hàng ô sáng ngang di chuyển từ trên xuống dưới
+    function runHorizontalScanEffect(effectNum, totalDuration, loopDuration, explicitServerStartTime = null, onCompleteCallback = null) {
       resetAllSeats("black");
       const startTimestamp = explicitServerStartTime || getServerNow();
       currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration, serverStartTime: startTimestamp };
-
-      const effectNames = {
-        3: `Hiệu ứng 3 (Judge Vote - ${totalDuration}s, Lặp ${loopDuration}s)`,
-        4: `Hiệu ứng 4 (Result - ${totalDuration}s, Lặp ${loopDuration}s)`
-      };
-      hudEffectName.textContent = effectNames[effectNum];
 
       const totalLoops = Math.round(totalDuration / loopDuration);
 
@@ -639,9 +635,8 @@
           seats.forEach(s => {
             s.el.className = "seat is-white";
           });
-          hudStatus.textContent = `Hoàn tất (${totalDuration}s) -> 101 Ô Trắng`;
-          hudTimer.textContent = `${totalDuration.toFixed(1)}s / ${totalDuration}s`;
           currentAnimationId = null;
+          if (onCompleteCallback) onCompleteCallback();
           return;
         }
 
@@ -653,9 +648,6 @@
         const currentLoopNum = Math.min(totalLoops, Math.floor(elapsed / loopDuration) + 1);
         const loopElapsed = elapsed % loopDuration;
         const progress = loopElapsed / loopDuration;
-
-        hudTimer.textContent = `${elapsed.toFixed(1)}s / ${totalDuration}s (Vòng ${currentLoopNum}/${totalLoops})`;
-        hudStatus.textContent = `2 Hàng ô liền kề sáng ngang di chuyển từ trên xuống`;
 
         // 2 hàng ô liền kề nhau và cặp đầu-cuối sáng đèn (trong 10 hàng: rowIndex 0 -> 9)
         const activeRow1 = Math.floor(progress * 10) % 10;
@@ -675,23 +667,195 @@
       currentAnimationId = requestAnimationFrame(animate);
     }
 
+    // --- HIỂN THỊ KẾT QUẢ BÌNH CHỌN & TỈ SỐ TRÊN SÂN KHẤU (INDEX.HTML) ---
+
+    // 1. Hiện kết quả (Thường):
+    // Những ô có vị trí tương ứng với Chọn sẽ có màu xanh lá, còn lại là màu đen.
+    // Xuất hiện từ từ (từ trái qua phải, từ trên xuống dưới - ô 1 đến 101), không phải tất cả cùng lúc.
+    // Điểm số đặt ở trung tâm hàng 2 (font SFAlienEncountersSolid, màu xanh lá) và nhảy số theo tiến trình.
+    function showNormalResult(votes = {}) {
+      resetAllSeats("black");
+
+      centerStageScore.style.display = "flex";
+      centerStageScore.innerHTML = `<div class="score-single-number" id="liveScoreCounter">0</div>`;
+      const liveScoreCounter = document.getElementById("liveScoreCounter");
+
+      let currentSeatIndex = 0;
+      let runningScore = 0;
+
+      sequentialRevealTimer = setInterval(() => {
+        if (currentSeatIndex >= seats.length) {
+          clearInterval(sequentialRevealTimer);
+          sequentialRevealTimer = null;
+          return;
+        }
+
+        const seat = seats[currentSeatIndex];
+        const vote = votes[seat.id];
+
+        if (vote === "CHON") {
+          seat.el.className = "seat is-green-lit";
+          runningScore++;
+          if (liveScoreCounter) liveScoreCounter.textContent = runningScore;
+        } else {
+          seat.el.className = "seat is-black";
+        }
+
+        currentSeatIndex++;
+      }, 35); // 35ms mỗi ô -> ~3.5s hoàn thành 101 ô
+    }
+
+    // 2. Hiện kết quả (Đối đầu):
+    // Đầu tiên chạy Hiệu ứng 4 (7s, lặp 1s/vòng).
+    // Sau khi kết thúc 7s, những ô tương ứng sẽ có màu hồng hoặc màu xanh dương.
+    // Hiển thị tỉ số ở trung tâm hàng 2 (font SFAlienEncountersSolid): Màu hồng bên trái, Màu xanh bên phải.
+    function showVersusResult(votes = {}, pinkScore = 0, blueScore = 0) {
+      playAudio(4);
+      runHorizontalScanEffect(4, 7, 1.0, getServerNow(), () => {
+        // Sau khi kết thúc 7 giây -> Hiển thị màu ghế và tỉ số
+        seats.forEach(s => {
+          const vote = votes[s.id];
+          if (vote === "HONG") {
+            s.el.className = "seat is-pink-lit";
+          } else if (vote === "XANH") {
+            s.el.className = "seat is-blue-lit";
+          } else {
+            s.el.className = "seat is-black";
+          }
+        });
+
+        centerStageScore.style.display = "flex";
+        centerStageScore.innerHTML = `
+          <div class="score-pair">
+            <span class="score-pink">${pinkScore}</span>
+            <span class="score-divider">:</span>
+            <span class="score-blue">${blueScore}</span>
+          </div>
+        `;
+      });
+    }
+
+    // 3. Hiện tỉ số tham khảo:
+    // Đặt ở vị trí trung tâm hàng 2 (Màu hồng bên trái, Màu xanh bên phải).
+    // Cứ 1 giây thì 2 con số sẽ đổi chỗ cho nhau (giữ nguyên màu sắc cố định: trái là Hồng, phải là Xanh).
+    function showReferenceScore(scoreA = 50, scoreB = 51) {
+      if (referenceSwapInterval) clearInterval(referenceSwapInterval);
+
+      centerStageScore.style.display = "flex";
+      let isSwapped = false;
+      let valLeft = scoreA;
+      let valRight = scoreB;
+
+      function renderScores() {
+        centerStageScore.innerHTML = `
+          <div class="score-pair">
+            <span class="score-pink">${isSwapped ? valRight : valLeft}</span>
+            <span class="score-divider">:</span>
+            <span class="score-blue">${isSwapped ? valLeft : valRight}</span>
+          </div>
+        `;
+      }
+
+      renderScores();
+
+      referenceSwapInterval = setInterval(() => {
+        isSwapped = !isSwapped;
+        renderScores();
+      }, 1000);
+    }
+
+    // 4. Hiện tỉ số khán giả:
+    // Đặt ở trung tâm hàng 2: Màu hồng bên trái, Màu xanh bên phải (Font SFAlienEncountersSolid).
+    function showAudienceScore(pink = 0, blue = 0) {
+      if (referenceSwapInterval) clearInterval(referenceSwapInterval);
+
+      centerStageScore.style.display = "flex";
+      centerStageScore.innerHTML = `
+        <div class="score-pair">
+          <span class="score-pink">${pink}</span>
+          <span class="score-divider">:</span>
+          <span class="score-blue">${blue}</span>
+        </div>
+      `;
+    }
+
+    // 5. Hiện sự bình chọn của các giám khảo bất kỳ theo danh sách vị trí đã chọn
+    function showSpecificJudges(judgeIds = [], votes = {}) {
+      if (currentAnimationId) {
+        cancelAnimationFrame(currentAnimationId);
+        currentAnimationId = null;
+      }
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
+      if (sequentialRevealTimer) {
+        clearInterval(sequentialRevealTimer);
+        sequentialRevealTimer = null;
+      }
+
+      // Đưa các số ID về dạng Number
+      const targetIdSet = new Set(judgeIds.map(id => Number(id)));
+
+      seats.forEach(s => {
+        if (targetIdSet.has(s.id)) {
+          const vote = votes[s.id];
+          if (vote === "CHON") {
+            s.el.className = "seat is-green-lit";
+          } else if (vote === "HONG") {
+            s.el.className = "seat is-pink-lit";
+          } else if (vote === "XANH") {
+            s.el.className = "seat is-blue-lit";
+          } else if (vote === "KHONG_CHON") {
+            s.el.className = "seat is-black";
+          } else {
+            s.el.className = "seat is-black";
+          }
+        } else {
+          s.el.className = "seat is-black";
+        }
+      });
+    }
+
+    // Các hàm Reset điểm & Tỉ số trên sân khấu
+    function resetStageScore() {
+      if (sequentialRevealTimer) {
+        clearInterval(sequentialRevealTimer);
+        sequentialRevealTimer = null;
+      }
+      centerStageScore.style.display = "none";
+      centerStageScore.innerHTML = "";
+    }
+
+    function resetReferenceScore() {
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
+      centerStageScore.style.display = "none";
+      centerStageScore.innerHTML = "";
+    }
+
+    function resetAudienceScore() {
+      centerStageScore.style.display = "none";
+      centerStageScore.innerHTML = "";
+    }
+
     // Bộ kích hoạt hiệu ứng đồng bộ tuyệt đối
     function triggerEffect(effectNum, explicitServerStartTime = null) {
       console.log(`[Stage] Đồng bộ Hiệu ứng: ${effectNum} (ServerTime: ${explicitServerStartTime || getServerNow()})`);
-      playAudio(effectNum, EFFECT_CONFIGS_DURATIONS[effectNum]);
+      playAudio(effectNum);
 
       if (effectNum === 1) {
         runDiagonalSpreadEffect(1, 26, explicitServerStartTime);
       } else if (effectNum === 2) {
         runDiagonalSpreadEffect(2, 40, explicitServerStartTime);
       } else if (effectNum === 3) {
-        runHorizontalScanEffect(3, 13, 3.25, explicitServerStartTime);
+        runHorizontalScanEffect(3, 13, 1.0, explicitServerStartTime);
       } else if (effectNum === 4) {
-        runHorizontalScanEffect(4, 5, 1.25, explicitServerStartTime);
+        runHorizontalScanEffect(4, 7, 1.0, explicitServerStartTime);
       }
     }
-
-    const EFFECT_CONFIGS_DURATIONS = { 1: 26, 2: 40, 3: 13, 4: 5 };
 
     function stopEffect() {
       stopAllAudio();
@@ -707,6 +871,24 @@
         triggerEffect(Number(data.effect), data.serverStartTime);
       } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
         stopEffect();
+      } else if (data.type === "SHOW_NORMAL_RESULT") {
+        showNormalResult(data.votes);
+      } else if (data.type === "SHOW_VERSUS_RESULT") {
+        showVersusResult(data.votes, data.pinkScore, data.blueScore);
+      } else if (data.type === "SHOW_REFERENCE_SCORE") {
+        showReferenceScore(data.scoreA, data.scoreB);
+      } else if (data.type === "SHOW_AUDIENCE_SCORE") {
+        showAudienceScore(data.pink, data.blue);
+      } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
+        showSpecificJudges(data.judgeIds, data.votes);
+      } else if (data.type === "RESET_SCORE") {
+        resetStageScore();
+      } else if (data.type === "RESET_REFERENCE_SCORE") {
+        resetReferenceScore();
+      } else if (data.type === "RESET_AUDIENCE_SCORE") {
+        resetAudienceScore();
+      } else if (data.type === "CLEAR_STAGE_DISPLAY") {
+        resetAllSeats("white");
       }
     };
 
@@ -721,9 +903,7 @@
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("[WS] Đã kết nối Server NodeJS (Hỗ trợ đa máy toàn cầu)");
-        hudDot.className = "hud-dot";
-        hudStatus.textContent = "Sẵn sàng (Đã kết nối Server)";
+        console.log("[WS] Đã kết nối Server NodeJS");
         syncServerClock(ws);
 
         if (clockSyncTimer) clearInterval(clockSyncTimer);
@@ -739,14 +919,11 @@
         try {
           const msg = JSON.parse(event.data);
 
-          // Phản hồi tính độ lệch đồng hồ (NTP algorithm)
           if (msg.type === "TIME_SYNC_RESPONSE") {
             const now = Date.now();
             const rtt = now - msg.clientPingTime;
             lastPingLatency = Math.round(rtt / 2);
-            // Độ lệch: serverTime - (thời gian gửi + 1/2 độ trễ mạng)
             serverTimeOffset = msg.serverTime - (msg.clientPingTime + lastPingLatency);
-            console.log(`[Clock Sync] Ping: ${lastPingLatency}ms | Offset: ${serverTimeOffset}ms`);
             return;
           }
 
@@ -758,11 +935,37 @@
             triggerEffect(Number(msg.state.effect), msg.state.serverStartTime);
           } else if (msg.type === "EFFECT_STOPPED" || msg.type === "RESET") {
             stopEffect();
-          } else if (msg.type === "STATE_SYNC" && msg.state && msg.state.action === "start") {
-            // Máy khách ở xa mở trang sau khi hiệu ứng đã bắt đầu -> lập tức bắt kịp tiến độ
-            const currentElapsed = (getServerNow() - msg.state.serverStartTime) / 1000;
-            if (currentElapsed < msg.state.duration) {
-              triggerEffect(Number(msg.state.effect), msg.state.serverStartTime);
+          } else if (msg.type === "SHOW_NORMAL_RESULT" && msg.payload) {
+            showNormalResult(msg.payload.votes);
+          } else if (msg.type === "SHOW_VERSUS_RESULT" && msg.payload) {
+            showVersusResult(msg.payload.votes, msg.payload.pinkScore, msg.payload.blueScore);
+          } else if (msg.type === "SHOW_REFERENCE_SCORE" && msg.payload) {
+            showReferenceScore(msg.payload.scoreA, msg.payload.scoreB);
+          } else if (msg.type === "SHOW_AUDIENCE_SCORE" && msg.payload) {
+            showAudienceScore(msg.payload.pink, msg.payload.blue);
+          } else if (msg.type === "SHOW_SPECIFIC_JUDGES" && msg.payload) {
+            showSpecificJudges(msg.payload.judgeIds, msg.payload.votes);
+          } else if (msg.type === "RESET_SCORE") {
+            resetStageScore();
+          } else if (msg.type === "RESET_REFERENCE_SCORE") {
+            resetReferenceScore();
+          } else if (msg.type === "RESET_AUDIENCE_SCORE") {
+            resetAudienceScore();
+          } else if (msg.type === "CLEAR_STAGE_DISPLAY") {
+            resetAllSeats("white");
+          } else if (msg.type === "STATE_SYNC" && msg.state) {
+            if (msg.state.action === "start") {
+              const currentElapsed = (getServerNow() - msg.state.serverStartTime) / 1000;
+              if (currentElapsed < msg.state.duration) {
+                triggerEffect(Number(msg.state.effect), msg.state.serverStartTime);
+              }
+            } else if (msg.state.stageDisplay && msg.state.stageDisplay.type !== "IDLE") {
+              const sd = msg.state.stageDisplay;
+              if (sd.type === "NORMAL_RESULT") showNormalResult(sd.votes);
+              else if (sd.type === "VERSUS_RESULT") showVersusResult(sd.votes, sd.pinkScore, sd.blueScore);
+              else if (sd.type === "REFERENCE_SCORE") showReferenceScore(sd.scoreA, sd.scoreB);
+              else if (sd.type === "AUDIENCE_SCORE") showAudienceScore(sd.pink, sd.blue);
+              else if (sd.type === "SPECIFIC_JUDGES") showSpecificJudges(sd.judgeIds, sd.votes);
             }
           }
         } catch (err) {
@@ -771,11 +974,6 @@
       };
 
       ws.onclose = () => {
-        console.warn("[WS] Mất kết nối, chuyển sang chế độ tự động kết nối lại & polling...");
-        hudDot.className = "hud-dot disconnected";
-        hudStatus.textContent = "Mất kết nối server (Đang thử lại)";
-
-        // Kích hoạt cơ chế Polling dự phòng qua REST API
         if (!fallbackPollTimer) {
           fallbackPollTimer = setInterval(pollServerState, 1500);
         }
@@ -783,11 +981,9 @@
       };
 
       ws.onerror = () => {
-        hudDot.className = "hud-dot disconnected";
       };
     }
 
-    // Polling REST API dự phòng khi mạng quá yếu hoặc chặn WebSocket
     async function pollServerState() {
       try {
         const res = await fetch("/api/state");
@@ -796,21 +992,21 @@
           if (data.serverTime) {
             serverTimeOffset = data.serverTime - Date.now();
           }
-          if (data.state && data.state.action === "start") {
-            const elapsed = (getServerNow() - data.state.serverStartTime) / 1000;
-            if (elapsed < data.state.duration && currentEffectState.effect !== data.state.effect) {
-              triggerEffect(Number(data.state.effect), data.state.serverStartTime);
+          if (data.state) {
+            if (data.state.action === "start") {
+              const elapsed = (getServerNow() - data.state.serverStartTime) / 1000;
+              if (elapsed < data.state.duration && currentEffectState.effect !== data.state.effect) {
+                triggerEffect(Number(data.state.effect), data.state.serverStartTime);
+              }
+            } else if ((data.state.action === "stop" || data.state.action === "reset") && currentEffectState.effect !== null) {
+              stopEffect();
             }
-          } else if (data.state && (data.state.action === "stop" || data.state.action === "reset") && currentEffectState.effect !== null) {
-            stopEffect();
           }
         }
       } catch (e) {}
     }
 
     connectWebSocket();
-
-    // Mặc định khởi tạo 101 ô màu trắng
     resetAllSeats("white");
   </script>
 </body>
