@@ -73,6 +73,13 @@ let audienceScore = {
   blue: 0,
 };
 
+// Các điểm số / tỉ số nhập chay (tự động đẩy lên hệ thống)
+let manualScores = {
+  normal: "",
+  versusPink: "",
+  versusBlue: "",
+};
+
 // Trạng thái hiển thị đặc biệt trên index.html
 // type: 'IDLE' | 'NORMAL_RESULT' | 'VERSUS_RESULT' | 'REFERENCE_SCORE' | 'AUDIENCE_SCORE'
 let stageDisplayState = {
@@ -93,6 +100,7 @@ let currentState = {
   roomCode: currentRoomCode,
   voting: votingState,
   audienceScore,
+  manualScores,
   stageDisplay: stageDisplayState,
 };
 
@@ -392,6 +400,8 @@ async function startServer() {
               delete votingState.votes[k];
             }
           });
+          manualScores.normal = "";
+          currentState.manualScores = manualScores;
           currentState.voting = votingState;
           stageDisplayState = {
             type: "IDLE",
@@ -401,6 +411,7 @@ async function startServer() {
           broadcast({
             type: "RESET_SCORE",
             voting: votingState,
+            manualScores,
             serverTime: serverNow,
           });
         } else if (data.type === "RESET_REFERENCE_SCORE") {
@@ -411,6 +422,9 @@ async function startServer() {
               delete votingState.votes[k];
             }
           });
+          manualScores.versusPink = "";
+          manualScores.versusBlue = "";
+          currentState.manualScores = manualScores;
           currentState.voting = votingState;
           stageDisplayState = {
             type: "IDLE",
@@ -420,7 +434,18 @@ async function startServer() {
           broadcast({
             type: "RESET_REFERENCE_SCORE",
             voting: votingState,
+            manualScores,
             serverTime: serverNow,
+          });
+        } else if (data.type === "UPDATE_MANUAL_SCORES") {
+          if (data.normal !== undefined) manualScores.normal = data.normal;
+          if (data.versusPink !== undefined) manualScores.versusPink = data.versusPink;
+          if (data.versusBlue !== undefined) manualScores.versusBlue = data.versusBlue;
+          currentState.manualScores = manualScores;
+          broadcast({
+            type: "MANUAL_SCORES_UPDATED",
+            manualScores,
+            serverTime: Date.now(),
           });
         } else if (data.type === "RESET_AUDIENCE_SCORE") {
           audienceScore = { pink: 0, blue: 0 };
@@ -789,6 +814,8 @@ async function startServer() {
         delete votingState.votes[k];
       }
     });
+    manualScores.normal = "";
+    currentState.manualScores = manualScores;
     currentState.voting = votingState;
     stageDisplayState = {
       type: "IDLE",
@@ -798,9 +825,10 @@ async function startServer() {
     broadcast({
       type: "RESET_SCORE",
       voting: votingState,
+      manualScores,
       serverTime: serverNow,
     });
-    res.json({ success: true, voting: votingState });
+    res.json({ success: true, voting: votingState, manualScores });
   });
 
   // REST API: Reset tỉ số Tham khảo / Đối đầu (xóa vote HONG & XANH)
@@ -811,6 +839,9 @@ async function startServer() {
         delete votingState.votes[k];
       }
     });
+    manualScores.versusPink = "";
+    manualScores.versusBlue = "";
+    currentState.manualScores = manualScores;
     currentState.voting = votingState;
     stageDisplayState = {
       type: "IDLE",
@@ -820,9 +851,26 @@ async function startServer() {
     broadcast({
       type: "RESET_REFERENCE_SCORE",
       voting: votingState,
+      manualScores,
       serverTime: serverNow,
     });
-    res.json({ success: true, voting: votingState });
+    res.json({ success: true, voting: votingState, manualScores });
+  });
+
+  // REST API: Cập nhật điểm nhập chay tự động
+  app.post("/api/scores/manual", (req, res) => {
+    if (req.body) {
+      if (req.body.normal !== undefined) manualScores.normal = req.body.normal;
+      if (req.body.versusPink !== undefined) manualScores.versusPink = req.body.versusPink;
+      if (req.body.versusBlue !== undefined) manualScores.versusBlue = req.body.versusBlue;
+    }
+    currentState.manualScores = manualScores;
+    broadcast({
+      type: "MANUAL_SCORES_UPDATED",
+      manualScores,
+      serverTime: Date.now(),
+    });
+    res.json({ success: true, manualScores });
   });
 
   // REST API: Reset tỉ số Khán giả

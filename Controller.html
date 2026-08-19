@@ -1218,6 +1218,9 @@
               inputBlueScore.value = savedAudienceScore.blue;
               statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
             }
+            if (msg.state.manualScores) {
+              applyManualScoresFromServer(msg.state.manualScores);
+            }
           } else if (msg.type === "ROOM_UPDATED") {
             currentRoomCode = msg.roomCode;
             displayRoomCode.textContent = currentRoomCode;
@@ -1232,6 +1235,8 @@
             }
           } else if (msg.type === "VOTE_CAST" && msg.voting) {
             updateVoteStatistics(msg.voting.votes);
+          } else if (msg.type === "MANUAL_SCORES_UPDATED" && msg.manualScores) {
+            applyManualScoresFromServer(msg.manualScores);
           } else if (msg.type === "AUDIENCE_SCORE_UPDATED" && msg.audienceScore) {
             savedAudienceScore = msg.audienceScore;
             statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
@@ -1275,6 +1280,63 @@
       };
     }
 
+    function applyManualScoresFromServer(ms) {
+      if (!ms) return;
+      if (inputNormalScore && document.activeElement !== inputNormalScore && ms.normal !== undefined) {
+        inputNormalScore.value = ms.normal;
+      }
+      if (inputVersusPink && document.activeElement !== inputVersusPink && ms.versusPink !== undefined) {
+        inputVersusPink.value = ms.versusPink;
+      }
+      if (inputVersusBlue && document.activeElement !== inputVersusBlue && ms.versusBlue !== undefined) {
+        inputVersusBlue.value = ms.versusBlue;
+      }
+    }
+
+    let manualScoreDebounce = null;
+    function autoSyncManualScores() {
+      const normal = inputNormalScore ? inputNormalScore.value : "";
+      const versusPink = inputVersusPink ? inputVersusPink.value : "";
+      const versusBlue = inputVersusBlue ? inputVersusBlue.value : "";
+
+      const payload = {
+        type: "UPDATE_MANUAL_SCORES",
+        normal,
+        versusPink,
+        versusBlue,
+      };
+
+      // Đẩy tức thì qua WebSocket và BroadcastChannel
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+      bc.postMessage(payload);
+
+      // Debounce lưu vào REST API
+      if (manualScoreDebounce) clearTimeout(manualScoreDebounce);
+      manualScoreDebounce = setTimeout(() => {
+        fetch("/api/scores/manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ normal, versusPink, versusBlue })
+        }).catch(() => {});
+      }, 250);
+    }
+
+    // Gắn sự kiện tự động đẩy lên hệ thống ngay sau khi nhập
+    if (inputNormalScore) {
+      inputNormalScore.addEventListener("input", autoSyncManualScores);
+      inputNormalScore.addEventListener("change", autoSyncManualScores);
+    }
+    if (inputVersusPink) {
+      inputVersusPink.addEventListener("input", autoSyncManualScores);
+      inputVersusPink.addEventListener("change", autoSyncManualScores);
+    }
+    if (inputVersusBlue) {
+      inputVersusBlue.addEventListener("input", autoSyncManualScores);
+      inputVersusBlue.addEventListener("change", autoSyncManualScores);
+    }
+
     async function pollServerState() {
       try {
         const res = await fetch("/api/state");
@@ -1298,6 +1360,9 @@
             if (data.state.audienceScore) {
               savedAudienceScore = data.state.audienceScore;
               statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+            }
+            if (data.state.manualScores) {
+              applyManualScoresFromServer(data.state.manualScores);
             }
           }
         }
@@ -1324,6 +1389,9 @@
           if (votesMap[k] === "HONG" || votesMap[k] === "XANH") delete votesMap[k];
         });
         updateVoteStatistics(votesMap);
+      } else if (data.type === "UPDATE_MANUAL_SCORES" || data.type === "MANUAL_SCORES_UPDATED") {
+        const ms = data.manualScores || data;
+        applyManualScoresFromServer(ms);
       }
     };
 
