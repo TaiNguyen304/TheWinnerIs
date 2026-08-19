@@ -639,6 +639,9 @@
               if (msg.state.voting.votes && currentSeatId && msg.state.voting.votes[currentSeatId]) {
                 selectedVote = msg.state.voting.votes[currentSeatId];
                 hasVoted = true;
+              } else {
+                selectedVote = null;
+                hasVoted = false;
               }
               updateVotingUI(msg.state.voting.mode || "LOCKED");
             }
@@ -652,6 +655,30 @@
             }
             updateVotingUI(msg.mode);
             showToast(msg.mode === "NORMAL" ? "🟢 Đã mở bình chọn Thường" : (msg.mode === "VERSUS" ? "⚡ Đã mở bình chọn Đối đầu" : "🔒 Đã khóa bình chọn"));
+          } else if (msg.type === "RESET_SCORE") {
+            // Khi Reset điểm -> Xóa lựa chọn Thường (CHON / KHONG_CHON) trên Judge
+            if (!msg.voting || !msg.voting.votes || !currentSeatId || !msg.voting.votes[currentSeatId]) {
+              if (selectedVote === "CHON" || selectedVote === "KHONG_CHON" || !selectedVote) {
+                hasVoted = false;
+                selectedVote = null;
+                updateVotingUI(currentVotingMode);
+                showToast("🔄 Điểm đã được reset - Lựa chọn đã được xóa!");
+              }
+            }
+          } else if (msg.type === "RESET_REFERENCE_SCORE") {
+            // Khi Reset tỉ số đối đầu -> Xóa lựa chọn Đối đầu (HONG / XANH) trên Judge
+            if (!msg.voting || !msg.voting.votes || !currentSeatId || !msg.voting.votes[currentSeatId]) {
+              if (selectedVote === "HONG" || selectedVote === "XANH" || !selectedVote) {
+                hasVoted = false;
+                selectedVote = null;
+                updateVotingUI(currentVotingMode);
+                showToast("🔄 Tỉ số đối đầu đã được reset - Lựa chọn đã được xóa!");
+              }
+            }
+          } else if (msg.type === "RESET") {
+            hasVoted = false;
+            selectedVote = null;
+            updateVotingUI(currentVotingMode);
           } else if (msg.type === "ROOM_UPDATED") {
             if (msg.roomCode !== currentRoomId) {
               showToast("⚠️ Mã phòng đã thay đổi trên hệ thống!");
@@ -676,6 +703,32 @@
         ws.close();
       };
     }
+
+    // BroadcastChannel cục bộ đồng bộ giữa các tab cùng trình duyệt
+    const bc = new BroadcastChannel("stage101_channel");
+    bc.onmessage = (e) => {
+      const data = e.data;
+      if (!data) return;
+      if (data.type === "RESET_SCORE") {
+        if (selectedVote === "CHON" || selectedVote === "KHONG_CHON" || !selectedVote) {
+          hasVoted = false;
+          selectedVote = null;
+          updateVotingUI(currentVotingMode);
+          showToast("🔄 Điểm đã được reset - Lựa chọn đã được xóa!");
+        }
+      } else if (data.type === "RESET_REFERENCE_SCORE") {
+        if (selectedVote === "HONG" || selectedVote === "XANH" || !selectedVote) {
+          hasVoted = false;
+          selectedVote = null;
+          updateVotingUI(currentVotingMode);
+          showToast("🔄 Tỉ số đối đầu đã được reset - Lựa chọn đã được xóa!");
+        }
+      } else if (data.type === "RESET") {
+        hasVoted = false;
+        selectedVote = null;
+        updateVotingUI(currentVotingMode);
+      }
+    };
 
     // Đăng nhập vào phòng
     async function loginJudge(seatId, roomId) {

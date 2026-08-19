@@ -817,26 +817,49 @@
       });
     }
 
-    // Các hàm Reset điểm & Tỉ số trên sân khấu
+    // Các hàm Reset điểm & Tỉ số trên sân khấu: Đưa 101 ô trở về màu trắng và xóa điểm
     function resetStageScore() {
+      if (currentAnimationId) {
+        cancelAnimationFrame(currentAnimationId);
+        currentAnimationId = null;
+      }
       if (sequentialRevealTimer) {
         clearInterval(sequentialRevealTimer);
         sequentialRevealTimer = null;
       }
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
+      resetAllSeats("white");
       centerStageScore.style.display = "none";
       centerStageScore.innerHTML = "";
     }
 
     function resetReferenceScore() {
+      if (currentAnimationId) {
+        cancelAnimationFrame(currentAnimationId);
+        currentAnimationId = null;
+      }
+      if (sequentialRevealTimer) {
+        clearInterval(sequentialRevealTimer);
+        sequentialRevealTimer = null;
+      }
       if (referenceSwapInterval) {
         clearInterval(referenceSwapInterval);
         referenceSwapInterval = null;
       }
+      resetAllSeats("white");
       centerStageScore.style.display = "none";
       centerStageScore.innerHTML = "";
     }
 
     function resetAudienceScore() {
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
+      resetAllSeats("white");
       centerStageScore.style.display = "none";
       centerStageScore.innerHTML = "";
     }
