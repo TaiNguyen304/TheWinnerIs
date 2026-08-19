@@ -321,6 +321,49 @@
       box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);
     }
 
+    /* Box Nhập Điểm Thường (Chay) */
+    .normal-input-container {
+      background: #090e29;
+      border: 1.5px solid #22c55e;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .normal-inputs-flex {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .normal-input-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .normal-input-field label {
+      font-size: 14px;
+      color: #4ade80;
+    }
+
+    .normal-input-field input {
+      width: 110px;
+      background: #111738;
+      border: 1.5px solid #22c55e;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #4ade80;
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+    }
+
     /* Box Nhập Tỉ Số Đối Đầu */
     .versus-input-container {
       background: #090e29;
@@ -747,11 +790,28 @@
     <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
       <span style="font-size: 12px; color: #a855f7;">2. HIỂN THỊ KẾT QUẢ & TỈ SỐ TRÊN SÂN KHẤU (INDEX.HTML):</span>
       
+      <!-- Hộp Nhập Chay Điểm Thường -->
+      <div class="normal-input-container">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: #4ade80; font-size: 14px;">🟢 NHẬP CHAY ĐIỂM (THƯỜNG):</span>
+          <small style="color: #94a3b8; font-size: 11px;">(Nhập số điểm để random vị trí các đèn xanh tương ứng hoặc để trống để lấy theo lượt bình chọn thực tế)</small>
+        </div>
+        <div class="normal-inputs-flex">
+          <div class="normal-input-field">
+            <label>🟢 Điểm (0-101):</label>
+            <input type="number" id="inputNormalScore" placeholder="Tự động" min="0" max="101" />
+          </div>
+          <button type="button" class="btn-action btn-show-normal" style="padding: 10px 18px; font-size: 14px;" onclick="showNormalResult()">
+            📊 Hiện kết quả (Thường)
+          </button>
+        </div>
+      </div>
+
       <!-- Hộp Nhập Tỉ Số Đối Đầu -->
       <div class="versus-input-container">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="color: #ffd269; font-size: 14px;">⚡ TỈ SỐ ĐỐI ĐẦU:</span>
-          <small style="color: #94a3b8; font-size: 11px;">(Nhập số trực tiếp hoặc để trống để tự động lấy theo số phiếu thực tế)</small>
+          <small style="color: #94a3b8; font-size: 11px;">(Nhập số trực tiếp để random vị trí các ô Hồng & Xanh, hoặc để trống để lấy theo lượt bình chọn thực tế)</small>
         </div>
         <div class="versus-inputs-flex">
           <div class="versus-input-field">
@@ -769,10 +829,6 @@
       </div>
 
       <div class="action-btn-grid">
-        <button class="btn-action btn-show-normal" onclick="showNormalResult()">
-          📊 Hiện kết quả (Thường)<br><small style="font-size: 11px; opacity: 0.9;">Xanh lá từng ô & đếm điểm</small>
-        </button>
-
         <button class="btn-action btn-show-ref" onclick="showReferenceScore()">
           🔀 Hiện tỉ số tham khảo<br><small style="font-size: 11px; opacity: 0.9;">Đổi chỗ 2 số mỗi 1 giây</small>
         </button>
@@ -998,6 +1054,7 @@
     const audienceModal = document.getElementById("audienceModal");
     const inputPinkScore = document.getElementById("inputPinkScore");
     const inputBlueScore = document.getElementById("inputBlueScore");
+    const inputNormalScore = document.getElementById("inputNormalScore");
     const inputVersusPink = document.getElementById("inputVersusPink");
     const inputVersusBlue = document.getElementById("inputVersusBlue");
     const specificCountInput = document.getElementById("specificCountInput");
@@ -1018,6 +1075,40 @@
 
     function getServerNow() {
       return Date.now() + serverTimeOffset;
+    }
+
+    // Hàm random ngẫu nhiên vị trí các đèn xanh (CHON) cho chế độ nhập chay điểm
+    function generateRandomNormalVotes(score) {
+      const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
+      for (let i = allSeats.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allSeats[i], allSeats[j]] = [allSeats[j], allSeats[i]];
+      }
+      const votes = {};
+      const clampedScore = Math.min(Math.max(score, 0), 101);
+      for (let i = 0; i < clampedScore; i++) {
+        votes[allSeats[i]] = "CHON";
+      }
+      return votes;
+    }
+
+    // Hàm random ngẫu nhiên vị trí các ô Hồng và Xanh cho chế độ nhập chay tỉ số đối đầu
+    function generateRandomVersusVotes(pinkCount, blueCount) {
+      const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
+      for (let i = allSeats.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allSeats[i], allSeats[j]] = [allSeats[j], allSeats[i]];
+      }
+      const votes = {};
+      const clampedPink = Math.min(Math.max(pinkCount, 0), 101);
+      const clampedBlue = Math.min(Math.max(blueCount, 0), 101 - clampedPink);
+      for (let i = 0; i < clampedPink && i < allSeats.length; i++) {
+        votes[allSeats[i]] = "HONG";
+      }
+      for (let i = clampedPink; i < clampedPink + clampedBlue && i < allSeats.length; i++) {
+        votes[allSeats[i]] = "XANH";
+      }
+      return votes;
     }
 
     function syncServerClock(wsInstance) {
@@ -1144,6 +1235,27 @@
           } else if (msg.type === "AUDIENCE_SCORE_UPDATED" && msg.audienceScore) {
             savedAudienceScore = msg.audienceScore;
             statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+          } else if (msg.type === "RESET_SCORE") {
+            if (msg.voting && msg.voting.votes) {
+              updateVoteStatistics(msg.voting.votes);
+            } else {
+              Object.keys(votesMap).forEach(k => {
+                if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") delete votesMap[k];
+              });
+              updateVoteStatistics(votesMap);
+            }
+            if (inputNormalScore) inputNormalScore.value = "";
+          } else if (msg.type === "RESET_REFERENCE_SCORE") {
+            if (msg.voting && msg.voting.votes) {
+              updateVoteStatistics(msg.voting.votes);
+            } else {
+              Object.keys(votesMap).forEach(k => {
+                if (votesMap[k] === "HONG" || votesMap[k] === "XANH") delete votesMap[k];
+              });
+              updateVoteStatistics(votesMap);
+            }
+            if (inputVersusPink) inputVersusPink.value = "";
+            if (inputVersusBlue) inputVersusBlue.value = "";
           }
         } catch (err) {
           console.error("WS Parse error:", err);
@@ -1196,6 +1308,24 @@
 
     // BroadcastChannel cục bộ
     const bc = new BroadcastChannel("stage101_channel");
+    bc.onmessage = (e) => {
+      const data = e.data;
+      if (!data) return;
+      if (data.type === "RESET_SCORE") {
+        if (inputNormalScore) inputNormalScore.value = "";
+        Object.keys(votesMap).forEach(k => {
+          if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") delete votesMap[k];
+        });
+        updateVoteStatistics(votesMap);
+      } else if (data.type === "RESET_REFERENCE_SCORE") {
+        if (inputVersusPink) inputVersusPink.value = "";
+        if (inputVersusBlue) inputVersusBlue.value = "";
+        Object.keys(votesMap).forEach(k => {
+          if (votesMap[k] === "HONG" || votesMap[k] === "XANH") delete votesMap[k];
+        });
+        updateVoteStatistics(votesMap);
+      }
+    };
 
     // Quản lý Mã Phòng
     function createNewRoom() {
@@ -1235,21 +1365,58 @@
 
     // Hiển thị kết quả lên Sân khấu
     function showNormalResult() {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SHOW_NORMAL_RESULT" }));
+      const normalVal = inputNormalScore ? inputNormalScore.value.trim() : "";
+      const payload = {
+        type: "SHOW_NORMAL_RESULT",
+      };
+
+      if (normalVal !== "") {
+        const scoreNum = Number(normalVal);
+        payload.normalScore = scoreNum;
+        payload.votes = generateRandomNormalVotes(scoreNum);
+      } else {
+        payload.votes = votesMap;
       }
-      bc.postMessage({ type: "SHOW_NORMAL_RESULT" });
-      fetch("/api/display/normal", { method: "POST" }).catch(() => {});
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+      bc.postMessage(payload);
+      fetch("/api/display/normal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function showVersusResult() {
-      const pinkVal = inputVersusPink.value.trim();
-      const blueVal = inputVersusBlue.value.trim();
+      const pinkVal = inputVersusPink ? inputVersusPink.value.trim() : "";
+      const blueVal = inputVersusBlue ? inputVersusBlue.value.trim() : "";
       const payload = {
         type: "SHOW_VERSUS_RESULT",
       };
-      if (pinkVal !== "") payload.pinkScore = Number(pinkVal);
-      if (blueVal !== "") payload.blueScore = Number(blueVal);
+
+      let isManual = false;
+      let pScore = 0;
+      let bScore = 0;
+
+      if (pinkVal !== "") {
+        pScore = Number(pinkVal);
+        payload.pinkScore = pScore;
+        isManual = true;
+      }
+      if (blueVal !== "") {
+        bScore = Number(blueVal);
+        payload.blueScore = bScore;
+        isManual = true;
+      }
+
+      if (isManual) {
+        // Tự động random vị trí ô xanh và ô hồng sao cho số lượng ứng với số đã nhập
+        payload.votes = generateRandomVersusVotes(pScore, bScore);
+      } else {
+        payload.votes = votesMap;
+      }
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
@@ -1280,6 +1447,15 @@
 
     // Các hàm Reset Điểm & Tỉ Số
     function resetStageScore() {
+      // Khi bấm reset điểm, số chọn và số không chọn trở về 0
+      if (inputNormalScore) inputNormalScore.value = "";
+      Object.keys(votesMap).forEach(k => {
+        if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") {
+          delete votesMap[k];
+        }
+      });
+      updateVoteStatistics(votesMap);
+
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "RESET_SCORE" }));
       }
@@ -1288,6 +1464,16 @@
     }
 
     function resetReferenceScore() {
+      // Khi bấm reset tỉ số, số phiếu xanh và hồng trở về 0
+      if (inputVersusPink) inputVersusPink.value = "";
+      if (inputVersusBlue) inputVersusBlue.value = "";
+      Object.keys(votesMap).forEach(k => {
+        if (votesMap[k] === "HONG" || votesMap[k] === "XANH") {
+          delete votesMap[k];
+        }
+      });
+      updateVoteStatistics(votesMap);
+
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "RESET_REFERENCE_SCORE" }));
       }

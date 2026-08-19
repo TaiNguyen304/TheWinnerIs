@@ -17,6 +17,40 @@ const EFFECT_CONFIGS = {
   4: { duration: 7, loopDuration: 1.0, sound: "Result.mp3", name: "Hiệu ứng 4 (Result - 7s, Lặp 1s)" },
 };
 
+// Hàm random ngẫu nhiên vị trí các đèn xanh (CHON) cho chế độ nhập chay điểm
+function generateRandomNormalVotes(score) {
+  const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
+  for (let i = allSeats.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allSeats[i], allSeats[j]] = [allSeats[j], allSeats[i]];
+  }
+  const votes = {};
+  const clampedScore = Math.min(Math.max(score, 0), 101);
+  for (let i = 0; i < clampedScore; i++) {
+    votes[allSeats[i]] = "CHON";
+  }
+  return votes;
+}
+
+// Hàm random ngẫu nhiên vị trí các ô Hồng và Xanh cho chế độ nhập chay tỉ số đối đầu
+function generateRandomVersusVotes(pinkCount, blueCount) {
+  const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
+  for (let i = allSeats.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allSeats[i], allSeats[j]] = [allSeats[j], allSeats[i]];
+  }
+  const votes = {};
+  const clampedPink = Math.min(Math.max(pinkCount, 0), 101);
+  const clampedBlue = Math.min(Math.max(blueCount, 0), 101 - clampedPink);
+  for (let i = 0; i < clampedPink && i < allSeats.length; i++) {
+    votes[allSeats[i]] = "HONG";
+  }
+  for (let i = clampedPink; i < clampedPink + clampedBlue && i < allSeats.length; i++) {
+    votes[allSeats[i]] = "XANH";
+  }
+  return votes;
+}
+
 // Tạo mã phòng ngẫu nhiên 6 chữ số
 function generateRoomCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -278,10 +312,19 @@ async function startServer() {
           Object.values(votingState.votes).forEach((v) => {
             if (v === "CHON") chonCount++;
           });
+
+          let votesToUse = { ...votingState.votes };
+          let finalScore = chonCount;
+
+          if (data.normalScore !== undefined && data.normalScore !== null && data.normalScore !== "") {
+            finalScore = Number(data.normalScore);
+            votesToUse = data.votes || generateRandomNormalVotes(finalScore);
+          }
+
           stageDisplayState = {
             type: "NORMAL_RESULT",
-            votes: { ...votingState.votes },
-            totalScore: chonCount,
+            votes: votesToUse,
+            totalScore: finalScore,
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
@@ -299,16 +342,21 @@ async function startServer() {
             if (v === "HONG") pinkCount++;
             if (v === "XANH") blueCount++;
           });
-          const pinkScore = (data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "")
-            ? Number(data.pinkScore)
-            : pinkCount;
-          const blueScore = (data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "")
-            ? Number(data.blueScore)
-            : blueCount;
+
+          const isManualPink = (data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "");
+          const isManualBlue = (data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "");
+
+          const pinkScore = isManualPink ? Number(data.pinkScore) : pinkCount;
+          const blueScore = isManualBlue ? Number(data.blueScore) : blueCount;
+
+          let votesToUse = { ...votingState.votes };
+          if (isManualPink || isManualBlue) {
+            votesToUse = data.votes || generateRandomVersusVotes(pinkScore, blueScore);
+          }
 
           stageDisplayState = {
             type: "VERSUS_RESULT",
-            votes: { ...votingState.votes },
+            votes: votesToUse,
             pinkScore,
             blueScore,
             serverStartTime: serverNow,
@@ -338,6 +386,13 @@ async function startServer() {
           });
         } else if (data.type === "RESET_SCORE") {
           const serverNow = Date.now();
+          // Khi bấm reset điểm, số chọn và không chọn trở về 0
+          Object.keys(votingState.votes).forEach((k) => {
+            if (votingState.votes[k] === "CHON" || votingState.votes[k] === "KHONG_CHON") {
+              delete votingState.votes[k];
+            }
+          });
+          currentState.voting = votingState;
           stageDisplayState = {
             type: "IDLE",
             timestamp: serverNow,
@@ -345,10 +400,18 @@ async function startServer() {
           currentState.stageDisplay = stageDisplayState;
           broadcast({
             type: "RESET_SCORE",
+            voting: votingState,
             serverTime: serverNow,
           });
         } else if (data.type === "RESET_REFERENCE_SCORE") {
           const serverNow = Date.now();
+          // Khi bấm reset tỉ số, số phiếu xanh và hồng trở về 0
+          Object.keys(votingState.votes).forEach((k) => {
+            if (votingState.votes[k] === "HONG" || votingState.votes[k] === "XANH") {
+              delete votingState.votes[k];
+            }
+          });
+          currentState.voting = votingState;
           stageDisplayState = {
             type: "IDLE",
             timestamp: serverNow,
@@ -356,6 +419,7 @@ async function startServer() {
           currentState.stageDisplay = stageDisplayState;
           broadcast({
             type: "RESET_REFERENCE_SCORE",
+            voting: votingState,
             serverTime: serverNow,
           });
         } else if (data.type === "RESET_AUDIENCE_SCORE") {
@@ -629,16 +693,24 @@ async function startServer() {
   });
 
   // REST API: Hiện kết quả Thường trên Index
-  app.post("/api/display/normal", (_req, res) => {
+  app.post("/api/display/normal", (req, res) => {
     const serverNow = Date.now();
     let chonCount = 0;
     Object.values(votingState.votes).forEach((v) => {
       if (v === "CHON") chonCount++;
     });
+
+    let finalScore = chonCount;
+    let votesToUse = { ...votingState.votes };
+    if (req.body && req.body.normalScore !== undefined && req.body.normalScore !== null && req.body.normalScore !== "") {
+      finalScore = Number(req.body.normalScore);
+      votesToUse = req.body.votes || generateRandomNormalVotes(finalScore);
+    }
+
     stageDisplayState = {
       type: "NORMAL_RESULT",
-      votes: { ...votingState.votes },
-      totalScore: chonCount,
+      votes: votesToUse,
+      totalScore: finalScore,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
@@ -652,7 +724,7 @@ async function startServer() {
   });
 
   // REST API: Hiện kết quả Đối đầu trên Index
-  app.post("/api/display/versus", (_req, res) => {
+  app.post("/api/display/versus", (req, res) => {
     const serverNow = Date.now();
     let pinkCount = 0;
     let blueCount = 0;
@@ -660,11 +732,23 @@ async function startServer() {
       if (v === "HONG") pinkCount++;
       if (v === "XANH") blueCount++;
     });
+
+    const isManualPink = req.body && req.body.pinkScore !== undefined && req.body.pinkScore !== null && req.body.pinkScore !== "";
+    const isManualBlue = req.body && req.body.blueScore !== undefined && req.body.blueScore !== null && req.body.blueScore !== "";
+
+    const pinkScore = isManualPink ? Number(req.body.pinkScore) : pinkCount;
+    const blueScore = isManualBlue ? Number(req.body.blueScore) : blueCount;
+
+    let votesToUse = { ...votingState.votes };
+    if (isManualPink || isManualBlue) {
+      votesToUse = req.body.votes || generateRandomVersusVotes(pinkScore, blueScore);
+    }
+
     stageDisplayState = {
       type: "VERSUS_RESULT",
-      votes: { ...votingState.votes },
-      pinkScore: pinkCount,
-      blueScore: blueCount,
+      votes: votesToUse,
+      pinkScore,
+      blueScore,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
@@ -675,6 +759,88 @@ async function startServer() {
       serverTime: serverNow,
     });
     res.json({ success: true, stageDisplay: stageDisplayState });
+  });
+
+  // REST API: Hiện sự bình chọn của giám khảo bất kỳ
+  app.post("/api/display/specific-judges", (req, res) => {
+    const serverNow = Date.now();
+    const judgeIds = Array.isArray(req.body.judgeIds) ? req.body.judgeIds : [];
+    stageDisplayState = {
+      type: "SPECIFIC_JUDGES",
+      judgeIds,
+      votes: { ...votingState.votes },
+      serverStartTime: serverNow,
+      timestamp: serverNow,
+    };
+    currentState.stageDisplay = stageDisplayState;
+    broadcast({
+      type: "SHOW_SPECIFIC_JUDGES",
+      payload: stageDisplayState,
+      serverTime: serverNow,
+    });
+    res.json({ success: true, stageDisplay: stageDisplayState });
+  });
+
+  // REST API: Reset điểm Thường (xóa vote CHON & KHONG_CHON)
+  app.post("/api/display/reset-score", (_req, res) => {
+    const serverNow = Date.now();
+    Object.keys(votingState.votes).forEach((k) => {
+      if (votingState.votes[k] === "CHON" || votingState.votes[k] === "KHONG_CHON") {
+        delete votingState.votes[k];
+      }
+    });
+    currentState.voting = votingState;
+    stageDisplayState = {
+      type: "IDLE",
+      timestamp: serverNow,
+    };
+    currentState.stageDisplay = stageDisplayState;
+    broadcast({
+      type: "RESET_SCORE",
+      voting: votingState,
+      serverTime: serverNow,
+    });
+    res.json({ success: true, voting: votingState });
+  });
+
+  // REST API: Reset tỉ số Tham khảo / Đối đầu (xóa vote HONG & XANH)
+  app.post("/api/display/reset-ref-score", (_req, res) => {
+    const serverNow = Date.now();
+    Object.keys(votingState.votes).forEach((k) => {
+      if (votingState.votes[k] === "HONG" || votingState.votes[k] === "XANH") {
+        delete votingState.votes[k];
+      }
+    });
+    currentState.voting = votingState;
+    stageDisplayState = {
+      type: "IDLE",
+      timestamp: serverNow,
+    };
+    currentState.stageDisplay = stageDisplayState;
+    broadcast({
+      type: "RESET_REFERENCE_SCORE",
+      voting: votingState,
+      serverTime: serverNow,
+    });
+    res.json({ success: true, voting: votingState });
+  });
+
+  // REST API: Reset tỉ số Khán giả
+  app.post("/api/display/reset-audience-score", (_req, res) => {
+    const serverNow = Date.now();
+    audienceScore = { pink: 0, blue: 0 };
+    currentState.audienceScore = audienceScore;
+    stageDisplayState = {
+      type: "IDLE",
+      timestamp: serverNow,
+    };
+    currentState.stageDisplay = stageDisplayState;
+    broadcast({
+      type: "RESET_AUDIENCE_SCORE",
+      audienceScore,
+      serverTime: serverNow,
+    });
+    res.json({ success: true, audienceScore });
   });
 
   // REST API: Hiện tỉ số tham khảo trên Index
