@@ -836,6 +836,9 @@
 
     // 5. Hiện sự bình chọn của các giám khảo bất kỳ theo danh sách vị trí đã chọn
     // LƯU Ý: Không tắt tính năng đổi chỗ 2 con số ở tỉ số tham khảo nếu chưa hiện kết quả đối đầu!
+    // VÀ khi đổi vị trí hiện, các vị trí cũ KHÔNG tắt đèn (chỉ tắt khi reset).
+    let revealedSpecificJudges = new Set();
+
     function showSpecificJudges(judgeIds = [], votes = {}) {
       if (currentAnimationId) {
         cancelAnimationFrame(currentAnimationId);
@@ -846,11 +849,16 @@
         sequentialRevealTimer = null;
       }
 
-      // Đưa các số ID về dạng Number
-      const targetIdSet = new Set(judgeIds.map(id => Number(id)));
+      // Thêm các ID mới vào tập hợp các ghế đã được mở
+      judgeIds.forEach(id => {
+        const num = Number(id);
+        if (!isNaN(num) && num >= 1 && num <= 101) {
+          revealedSpecificJudges.add(num);
+        }
+      });
 
       seats.forEach(s => {
-        if (targetIdSet.has(s.id)) {
+        if (revealedSpecificJudges.has(s.id)) {
           const vote = votes[s.id];
           if (vote === "CHON") {
             s.el.className = "seat is-green-lit";
@@ -883,6 +891,7 @@
         clearInterval(referenceSwapInterval);
         referenceSwapInterval = null;
       }
+      revealedSpecificJudges.clear();
       resetAllSeats("white");
       centerStageScore.style.display = "none";
       centerStageScore.innerHTML = "";
@@ -901,6 +910,7 @@
         clearInterval(referenceSwapInterval);
         referenceSwapInterval = null;
       }
+      revealedSpecificJudges.clear();
       resetAllSeats("white");
       centerStageScore.style.display = "none";
       centerStageScore.innerHTML = "";

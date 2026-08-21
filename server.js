@@ -404,8 +404,17 @@ async function startServer() {
           });
         } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
           const serverNow = Date.now();
-          const judgeIds = Array.isArray(data.judgeIds) ? data.judgeIds : [];
+          const newJudgeIds = Array.isArray(data.judgeIds) ? data.judgeIds : [];
           
+          let combinedJudgeIds = [];
+          if (roomState.stageDisplay && roomState.stageDisplay.type === "SPECIFIC_JUDGES" && Array.isArray(roomState.stageDisplay.judgeIds)) {
+            const existingSet = new Set(roomState.stageDisplay.judgeIds.map(Number));
+            newJudgeIds.forEach(id => existingSet.add(Number(id)));
+            combinedJudgeIds = Array.from(existingSet);
+          } else {
+            combinedJudgeIds = Array.from(new Set(newJudgeIds.map(Number)));
+          }
+
           let votesToUse = data.votes && Object.keys(data.votes).length > 0 ? { ...data.votes } : { ...roomState.voting.votes };
           if (Object.keys(votesToUse).length === 0) {
             if (roomState.manualScores.normal !== "") {
@@ -421,7 +430,7 @@ async function startServer() {
 
           roomState.stageDisplay = {
             type: "SPECIFIC_JUDGES",
-            judgeIds,
+            judgeIds: combinedJudgeIds,
             votes: votesToUse,
             serverStartTime: serverNow,
             timestamp: serverNow,
@@ -846,8 +855,17 @@ async function startServer() {
     const roomId = getReqRoomId(req);
     const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    const judgeIds = Array.isArray(req.body.judgeIds) ? req.body.judgeIds : [];
+    const newJudgeIds = Array.isArray(req.body.judgeIds) ? req.body.judgeIds : [];
     
+    let combinedJudgeIds = [];
+    if (roomState.stageDisplay && roomState.stageDisplay.type === "SPECIFIC_JUDGES" && Array.isArray(roomState.stageDisplay.judgeIds)) {
+      const existingSet = new Set(roomState.stageDisplay.judgeIds.map(Number));
+      newJudgeIds.forEach(id => existingSet.add(Number(id)));
+      combinedJudgeIds = Array.from(existingSet);
+    } else {
+      combinedJudgeIds = Array.from(new Set(newJudgeIds.map(Number)));
+    }
+
     let votesToUse = req.body.votes && Object.keys(req.body.votes).length > 0 ? { ...req.body.votes } : { ...roomState.voting.votes };
     if (Object.keys(votesToUse).length === 0) {
       if (roomState.manualScores.normal !== "") {
@@ -863,7 +881,7 @@ async function startServer() {
 
     roomState.stageDisplay = {
       type: "SPECIFIC_JUDGES",
-      judgeIds,
+      judgeIds: combinedJudgeIds,
       votes: votesToUse,
       serverStartTime: serverNow,
       timestamp: serverNow,
