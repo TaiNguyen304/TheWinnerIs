@@ -56,53 +56,54 @@ function generateRoomCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-let currentRoomCode = "101101"; // Mặc định 6 chữ số
+// MULTI-ROOM STORE: Quản lý độc lập từng phòng chơi
+const rooms = new Map();
 
-// Trạng thái bình chọn của Ban Giám Khảo (1 - 101)
-// Mode: 'LOCKED' | 'NORMAL' (Chọn / Không chọn) | 'VERSUS' (Màu xanh / Màu hồng)
-let votingState = {
-  roomId: currentRoomCode,
-  mode: "LOCKED", // 'LOCKED' | 'NORMAL' | 'VERSUS'
-  votes: {}, // { [seatId]: 'CHON' | 'KHONG_CHON' | 'XANH' | 'HONG' }
-  connectedJudges: {}, // { [seatId]: { name, connectedAt } }
-};
+function createDefaultRoomState(roomCode) {
+  const serverNow = Date.now();
+  return {
+    roomCode: roomCode,
+    effect: null,
+    action: "reset",
+    duration: 0,
+    loopDuration: 0,
+    soundTrack: "",
+    serverStartTime: 0,
+    timestamp: serverNow,
+    voting: {
+      roomId: roomCode,
+      mode: "LOCKED",
+      votes: {},
+      connectedJudges: {},
+    },
+    audienceScore: {
+      pink: 0,
+      blue: 0,
+    },
+    manualScores: {
+      normal: "",
+      versusPink: "",
+      versusBlue: "",
+    },
+    stageDisplay: {
+      type: "IDLE",
+      payload: {},
+      timestamp: serverNow,
+    },
+  };
+}
 
-// Tỉ số khán giả nhập vào
-let audienceScore = {
-  pink: 0,
-  blue: 0,
-};
+function getOrCreateRoom(roomCode) {
+  const code = (roomCode || "101101").toString().trim();
+  if (!rooms.has(code)) {
+    rooms.set(code, createDefaultRoomState(code));
+    console.log(`[MultiRoom] Khởi tạo phòng mới: ${code}`);
+  }
+  return rooms.get(code);
+}
 
-// Các điểm số / tỉ số nhập chay (tự động đẩy lên hệ thống)
-let manualScores = {
-  normal: "",
-  versusPink: "",
-  versusBlue: "",
-};
-
-// Trạng thái hiển thị đặc biệt trên index.html
-// type: 'IDLE' | 'NORMAL_RESULT' | 'VERSUS_RESULT' | 'REFERENCE_SCORE' | 'AUDIENCE_SCORE'
-let stageDisplayState = {
-  type: "IDLE",
-  payload: {},
-  timestamp: Date.now(),
-};
-
-// Trạng thái chuẩn từ Server làm chuẩn cho tất cả máy khách trên thế giới
-let currentState = {
-  effect: null,
-  action: "reset",
-  duration: 0,
-  loopDuration: 0,
-  soundTrack: "",
-  serverStartTime: 0, // Thời gian server chuẩn (timestamp UTC)
-  timestamp: Date.now(),
-  roomCode: currentRoomCode,
-  voting: votingState,
-  audienceScore,
-  manualScores,
-  stageDisplay: stageDisplayState,
-};
+// Khởi tạo phòng mặc định 101101
+getOrCreateRoom("101101");
 
 function findHtmlFile(pageName) {
   const cleanName = pageName.replace(/\.html$/i, "");
@@ -152,7 +153,17 @@ async function startServer() {
   const wss = new WebSocketServer({ server, path: "/ws" });
   const clients = new Set();
 
-  const broadcast = (data) => {
+  const broadcastToRoom = (roomId, data) => {
+    const targetRoomId = (roomId || "101101").toString().trim();
+    const payload = JSON.stringify({ ...data, roomId: targetRoomId });
+    for (const client of clients) {
+      if (client.readyState === WebSocket.OPEN && client.roomId === targetRoomId) {
+        client.send(payload);
+      }
+    }
+  };
+
+  const broadcastAll = (data) => {
     const payload = JSON.stringify(data);
     for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {
@@ -174,25 +185,32 @@ async function startServer() {
   wss.on("connection", (ws, req) => {
     const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     clients.add(ws);
-    console.log(`[WS] Máy khách mới kết nối từ: ${clientIp} (Tổng máy đang online: ${clients.size})`);
 
-    // Gửi ngay trạng thái hiện tại và thời gian server chuẩn
+    // Lấy roomId từ URL query nếu có (ví dụ: /ws?roomid=123456)
+    const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const queryRoomId = urlObj.searchParams.get("roomid") || urlObj.searchParams.get("roomId") || "101101";
+    ws.roomId = queryRoomId.toString().trim();
+
+    console.log(`[WS] Máy khách mới kết nối từ: ${clientIp} (Phòng: ${ws.roomId}, Tổng online: ${clients.size})`);
+
+    const room = getOrCreateRoom(ws.roomId);
+
+    // Gửi ngay trạng thái hiện tại của phòng này
     ws.send(
       JSON.stringify({
         type: "STATE_SYNC",
-        state: currentState,
+        roomId: ws.roomId,
+        state: room,
         serverTime: Date.now(),
         clientsCount: clients.size,
       })
     );
 
-    broadcast({ type: "CLIENTS_COUNT", count: clients.size });
-
     ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
 
-        // Giao thức NTP thu nhỏ: Đồng bộ giờ chính xác mili-giây giữa các châu lục
+        // Giao thức NTP thu nhỏ: Đồng bộ giờ chính xác mili-giây
         if (data.type === "TIME_SYNC") {
           ws.send(
             JSON.stringify({
@@ -204,124 +222,134 @@ async function startServer() {
           return;
         }
 
+        // Lệnh tham gia phòng hoặc đổi phòng
+        if (data.type === "JOIN_ROOM") {
+          const targetRoom = (data.roomId || "101101").toString().trim();
+          ws.roomId = targetRoom;
+          const r = getOrCreateRoom(targetRoom);
+          console.log(`[WS] Máy khách tham gia phòng: ${targetRoom}`);
+          ws.send(
+            JSON.stringify({
+              type: "STATE_SYNC",
+              roomId: targetRoom,
+              state: r,
+              serverTime: Date.now(),
+              clientsCount: clients.size,
+            })
+          );
+          return;
+        }
+
+        const roomId = (data.roomId || ws.roomId || "101101").toString().trim();
+        ws.roomId = roomId;
+        const roomState = getOrCreateRoom(roomId);
+
         if (data.type === "TRIGGER_EFFECT") {
           const effectNum = Number(data.effect);
           const config = EFFECT_CONFIGS[effectNum];
           if (config) {
             const serverNow = Date.now();
-            currentState = {
-              ...currentState,
-              effect: effectNum,
-              action: "start",
-              duration: config.duration,
-              loopDuration: config.loopDuration || 0,
-              soundTrack: config.sound,
-              serverStartTime: serverNow,
-              timestamp: serverNow,
-              stageDisplay: { type: "EFFECT", effect: effectNum, timestamp: serverNow },
-            };
-            console.log(`[Server] KÍCH HOẠT HIỆU ỨNG ${effectNum} -> Đồng bộ tới ${clients.size} máy`);
-            broadcast({
+            roomState.effect = effectNum;
+            roomState.action = "start";
+            roomState.duration = config.duration;
+            roomState.loopDuration = config.loopDuration || 0;
+            roomState.soundTrack = config.sound;
+            roomState.serverStartTime = serverNow;
+            roomState.timestamp = serverNow;
+            roomState.stageDisplay = { type: "EFFECT", effect: effectNum, timestamp: serverNow };
+
+            console.log(`[Server] KÍCH HOẠT HIỆU ỨNG ${effectNum} (Phòng ${roomId})`);
+            broadcastToRoom(roomId, {
               type: "EFFECT_TRIGGERED",
-              state: currentState,
+              state: roomState,
               serverTime: serverNow,
               clientsCount: clients.size,
             });
           }
         } else if (data.type === "STOP_EFFECT") {
           const serverNow = Date.now();
-          currentState = {
-            ...currentState,
-            effect: null,
-            action: "stop",
-            duration: 0,
-            loopDuration: 0,
-            soundTrack: "",
-            serverStartTime: serverNow,
-            timestamp: serverNow,
-            stageDisplay: { type: "IDLE", timestamp: serverNow },
-          };
-          console.log(`[Server] DỪNG HIỆU ỨNG -> Đồng bộ tới ${clients.size} máy`);
-          broadcast({
+          roomState.effect = null;
+          roomState.action = "stop";
+          roomState.duration = 0;
+          roomState.loopDuration = 0;
+          roomState.soundTrack = "";
+          roomState.serverStartTime = serverNow;
+          roomState.timestamp = serverNow;
+          roomState.stageDisplay = { type: "IDLE", timestamp: serverNow };
+
+          console.log(`[Server] DỪNG HIỆU ỨNG (Phòng ${roomId})`);
+          broadcastToRoom(roomId, {
             type: "EFFECT_STOPPED",
-            state: currentState,
+            state: roomState,
             serverTime: serverNow,
             clientsCount: clients.size,
           });
         } else if (data.type === "RESET") {
           const serverNow = Date.now();
-          currentState = {
-            ...currentState,
-            effect: null,
-            action: "reset",
-            mode: data.mode || "white",
-            duration: 0,
-            loopDuration: 0,
-            soundTrack: "",
-            serverStartTime: serverNow,
-            timestamp: serverNow,
-            stageDisplay: { type: "IDLE", mode: data.mode || "white", timestamp: serverNow },
-          };
-          broadcast({
+          roomState.effect = null;
+          roomState.action = "reset";
+          roomState.mode = data.mode || "white";
+          roomState.duration = 0;
+          roomState.loopDuration = 0;
+          roomState.soundTrack = "";
+          roomState.serverStartTime = serverNow;
+          roomState.timestamp = serverNow;
+          roomState.stageDisplay = { type: "IDLE", mode: data.mode || "white", timestamp: serverNow };
+
+          broadcastToRoom(roomId, {
             type: "RESET",
-            state: currentState,
+            state: roomState,
             serverTime: serverNow,
             clientsCount: clients.size,
           });
         } else if (data.type === "CREATE_ROOM") {
-          currentRoomCode = generateRoomCode();
-          votingState = {
-            roomId: currentRoomCode,
-            mode: "LOCKED",
-            votes: {},
-            connectedJudges: {},
-          };
-          currentState.roomCode = currentRoomCode;
-          currentState.voting = votingState;
-          console.log(`[Room] Tạo mã phòng mới: ${currentRoomCode}`);
-          broadcast({
-            type: "ROOM_UPDATED",
-            roomCode: currentRoomCode,
-            voting: votingState,
-            serverTime: Date.now(),
-          });
+          const newRoomCode = generateRoomCode();
+          const newRoom = getOrCreateRoom(newRoomCode);
+          ws.roomId = newRoomCode;
+          console.log(`[Room] Tạo mã phòng mới: ${newRoomCode}`);
+          ws.send(
+            JSON.stringify({
+              type: "ROOM_CREATED",
+              roomCode: newRoomCode,
+              state: newRoom,
+              serverTime: Date.now(),
+            })
+          );
         } else if (data.type === "SET_VOTING_MODE") {
-          const newMode = data.mode; // 'NORMAL' | 'VERSUS' | 'LOCKED'
-          votingState.mode = newMode;
-          // Nếu chuyển chế độ mới, có thể reset lượt vote trước đó nếu yêu cầu
+          const newMode = data.mode;
+          roomState.voting.mode = newMode;
           if (data.resetVotes) {
-            votingState.votes = {};
+            roomState.voting.votes = {};
           }
-          currentState.voting = votingState;
-          console.log(`[Voting] Chuyển chế độ bình chọn: ${newMode}`);
-          broadcast({
+          console.log(`[Voting] Chuyển chế độ bình chọn (Phòng ${roomId}): ${newMode}`);
+          broadcastToRoom(roomId, {
             type: "VOTING_MODE_CHANGED",
             mode: newMode,
-            voting: votingState,
+            voting: roomState.voting,
             serverTime: Date.now(),
           });
         } else if (data.type === "CAST_VOTE") {
-          const { roomId, seatId, vote } = data;
-          if (roomId === currentRoomCode && seatId >= 1 && seatId <= 101) {
-            votingState.votes[seatId] = vote;
-            currentState.voting = votingState;
-            console.log(`[Vote] Ghế #${seatId} đã chọn: ${vote} (Phòng ${roomId})`);
-            broadcast({
+          const { seatId, vote } = data;
+          const seatNum = Number(seatId);
+          if (seatNum >= 1 && seatNum <= 101) {
+            roomState.voting.votes[seatNum] = vote;
+            console.log(`[Vote] Ghế #${seatNum} đã chọn: ${vote} (Phòng ${roomId})`);
+            broadcastToRoom(roomId, {
               type: "VOTE_CAST",
-              seatId,
+              seatId: seatNum,
               vote,
-              voting: votingState,
+              voting: roomState.voting,
               serverTime: Date.now(),
             });
           }
         } else if (data.type === "SHOW_NORMAL_RESULT") {
           const serverNow = Date.now();
           let chonCount = 0;
-          Object.values(votingState.votes).forEach((v) => {
+          Object.values(roomState.voting.votes).forEach((v) => {
             if (v === "CHON") chonCount++;
           });
 
-          let votesToUse = { ...votingState.votes };
+          let votesToUse = { ...roomState.voting.votes };
           let finalScore = chonCount;
 
           if (data.normalScore !== undefined && data.normalScore !== null && data.normalScore !== "") {
@@ -329,40 +357,39 @@ async function startServer() {
             votesToUse = data.votes || generateRandomNormalVotes(finalScore);
           }
 
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "NORMAL_RESULT",
             votes: votesToUse,
             totalScore: finalScore,
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "SHOW_NORMAL_RESULT",
-            payload: stageDisplayState,
+            payload: roomState.stageDisplay,
             serverTime: serverNow,
           });
         } else if (data.type === "SHOW_VERSUS_RESULT") {
           const serverNow = Date.now();
           let pinkCount = 0;
           let blueCount = 0;
-          Object.values(votingState.votes).forEach((v) => {
+          Object.values(roomState.voting.votes).forEach((v) => {
             if (v === "HONG") pinkCount++;
             if (v === "XANH") blueCount++;
           });
 
-          const isManualPink = (data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "");
-          const isManualBlue = (data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "");
+          const isManualPink = data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "";
+          const isManualBlue = data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "";
 
           const pinkScore = isManualPink ? Number(data.pinkScore) : pinkCount;
           const blueScore = isManualBlue ? Number(data.blueScore) : blueCount;
 
-          let votesToUse = { ...votingState.votes };
+          let votesToUse = { ...roomState.voting.votes };
           if (isManualPink || isManualBlue) {
             votesToUse = data.votes || generateRandomVersusVotes(pinkScore, blueScore);
           }
 
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "VERSUS_RESULT",
             votes: votesToUse,
             pinkScore,
@@ -370,152 +397,158 @@ async function startServer() {
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "SHOW_VERSUS_RESULT",
-            payload: stageDisplayState,
+            payload: roomState.stageDisplay,
             serverTime: serverNow,
           });
         } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
           const serverNow = Date.now();
           const judgeIds = Array.isArray(data.judgeIds) ? data.judgeIds : [];
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "SPECIFIC_JUDGES",
             judgeIds,
-            votes: { ...votingState.votes },
+            votes: { ...roomState.voting.votes },
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "SHOW_SPECIFIC_JUDGES",
-            payload: stageDisplayState,
+            payload: roomState.stageDisplay,
             serverTime: serverNow,
           });
         } else if (data.type === "RESET_SCORE") {
           const serverNow = Date.now();
-          // Khi bấm reset điểm, số chọn và không chọn trở về 0
-          Object.keys(votingState.votes).forEach((k) => {
-            if (votingState.votes[k] === "CHON" || votingState.votes[k] === "KHONG_CHON") {
-              delete votingState.votes[k];
+          Object.keys(roomState.voting.votes).forEach((k) => {
+            if (roomState.voting.votes[k] === "CHON" || roomState.voting.votes[k] === "KHONG_CHON") {
+              delete roomState.voting.votes[k];
             }
           });
-          manualScores.normal = "";
-          currentState.manualScores = manualScores;
-          currentState.voting = votingState;
-          stageDisplayState = {
+          roomState.manualScores.normal = "";
+          roomState.stageDisplay = {
             type: "IDLE",
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "RESET_SCORE",
-            voting: votingState,
-            manualScores,
+            voting: roomState.voting,
+            manualScores: roomState.manualScores,
             serverTime: serverNow,
           });
         } else if (data.type === "RESET_REFERENCE_SCORE") {
           const serverNow = Date.now();
-          // Khi bấm reset tỉ số, số phiếu xanh và hồng trở về 0
-          Object.keys(votingState.votes).forEach((k) => {
-            if (votingState.votes[k] === "HONG" || votingState.votes[k] === "XANH") {
-              delete votingState.votes[k];
+          Object.keys(roomState.voting.votes).forEach((k) => {
+            if (roomState.voting.votes[k] === "HONG" || roomState.voting.votes[k] === "XANH") {
+              delete roomState.voting.votes[k];
             }
           });
-          manualScores.versusPink = "";
-          manualScores.versusBlue = "";
-          currentState.manualScores = manualScores;
-          currentState.voting = votingState;
-          stageDisplayState = {
+          roomState.manualScores.versusPink = "";
+          roomState.manualScores.versusBlue = "";
+          roomState.stageDisplay = {
             type: "IDLE",
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "RESET_REFERENCE_SCORE",
-            voting: votingState,
-            manualScores,
+            voting: roomState.voting,
+            manualScores: roomState.manualScores,
             serverTime: serverNow,
           });
         } else if (data.type === "UPDATE_MANUAL_SCORES") {
-          if (data.normal !== undefined) manualScores.normal = data.normal;
-          if (data.versusPink !== undefined) manualScores.versusPink = data.versusPink;
-          if (data.versusBlue !== undefined) manualScores.versusBlue = data.versusBlue;
-          currentState.manualScores = manualScores;
-          broadcast({
+          if (data.normal !== undefined) roomState.manualScores.normal = data.normal;
+          if (data.versusPink !== undefined) roomState.manualScores.versusPink = data.versusPink;
+          if (data.versusBlue !== undefined) roomState.manualScores.versusBlue = data.versusBlue;
+          broadcastToRoom(roomId, {
             type: "MANUAL_SCORES_UPDATED",
-            manualScores,
+            manualScores: roomState.manualScores,
             serverTime: Date.now(),
           });
         } else if (data.type === "RESET_AUDIENCE_SCORE") {
-          audienceScore = { pink: 0, blue: 0 };
-          currentState.audienceScore = audienceScore;
+          roomState.audienceScore = { pink: 0, blue: 0 };
           const serverNow = Date.now();
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "IDLE",
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "RESET_AUDIENCE_SCORE",
-            audienceScore,
+            audienceScore: roomState.audienceScore,
             serverTime: serverNow,
           });
         } else if (data.type === "SHOW_REFERENCE_SCORE") {
           const serverNow = Date.now();
           let pinkCount = 0;
           let blueCount = 0;
-          Object.values(votingState.votes).forEach((v) => {
-            if (v === "HONG") pinkCount++;
-            if (v === "XANH") blueCount++;
-          });
-          stageDisplayState = {
+
+          if (data.pink !== undefined && data.pink !== "") {
+            pinkCount = Number(data.pink) || 0;
+          } else if (data.scoreA !== undefined && data.scoreA !== "") {
+            pinkCount = Number(data.scoreA) || 0;
+          } else if (roomState.manualScores.versusPink !== "") {
+            pinkCount = Number(roomState.manualScores.versusPink) || 0;
+          } else {
+            Object.values(roomState.voting.votes).forEach((v) => {
+              if (v === "HONG") pinkCount++;
+            });
+          }
+
+          if (data.blue !== undefined && data.blue !== "") {
+            blueCount = Number(data.blue) || 0;
+          } else if (data.scoreB !== undefined && data.scoreB !== "") {
+            blueCount = Number(data.scoreB) || 0;
+          } else if (roomState.manualScores.versusBlue !== "") {
+            blueCount = Number(roomState.manualScores.versusBlue) || 0;
+          } else {
+            Object.values(roomState.voting.votes).forEach((v) => {
+              if (v === "XANH") blueCount++;
+            });
+          }
+
+          roomState.stageDisplay = {
             type: "REFERENCE_SCORE",
             scoreA: pinkCount,
             scoreB: blueCount,
+            pink: pinkCount,
+            blue: blueCount,
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "SHOW_REFERENCE_SCORE",
-            payload: stageDisplayState,
+            payload: roomState.stageDisplay,
             serverTime: serverNow,
           });
         } else if (data.type === "SET_AUDIENCE_SCORE") {
-          audienceScore = {
+          roomState.audienceScore = {
             pink: Number(data.pink) || 0,
             blue: Number(data.blue) || 0,
           };
-          currentState.audienceScore = audienceScore;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "AUDIENCE_SCORE_UPDATED",
-            audienceScore,
+            audienceScore: roomState.audienceScore,
             serverTime: Date.now(),
           });
         } else if (data.type === "SHOW_AUDIENCE_SCORE") {
           const serverNow = Date.now();
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "AUDIENCE_SCORE",
-            pink: audienceScore.pink,
-            blue: audienceScore.blue,
+            pink: roomState.audienceScore.pink,
+            blue: roomState.audienceScore.blue,
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "SHOW_AUDIENCE_SCORE",
-            payload: stageDisplayState,
+            payload: roomState.stageDisplay,
             serverTime: serverNow,
           });
         } else if (data.type === "CLEAR_STAGE_DISPLAY") {
           const serverNow = Date.now();
-          stageDisplayState = {
+          roomState.stageDisplay = {
             type: "IDLE",
             timestamp: serverNow,
           };
-          currentState.stageDisplay = stageDisplayState;
-          broadcast({
+          broadcastToRoom(roomId, {
             type: "CLEAR_STAGE_DISPLAY",
             serverTime: serverNow,
           });
@@ -528,7 +561,6 @@ async function startServer() {
     ws.on("close", () => {
       clients.delete(ws);
       console.log(`[WS] Máy khách ngắt kết nối. (Còn lại: ${clients.size} máy)`);
-      broadcast({ type: "CLIENTS_COUNT", count: clients.size });
     });
 
     ws.on("error", () => {
@@ -536,10 +568,17 @@ async function startServer() {
     });
   });
 
-  // REST API: Lấy trạng thái hiện tại (kèm serverTime để bù độ lệch múi giờ của client)
-  app.get("/api/state", (_req, res) => {
+  const getReqRoomId = (req) => {
+    return (req.body?.roomId || req.query?.roomid || req.query?.roomId || req.headers["x-room-id"] || "101101").toString().trim();
+  };
+
+  // REST API: Lấy trạng thái hiện tại của phòng
+  app.get("/api/state", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     res.json({
-      state: currentState,
+      roomId,
+      state: roomState,
       clientsCount: clients.size,
       serverTime: Date.now(),
       effects: EFFECT_CONFIGS,
@@ -556,6 +595,8 @@ async function startServer() {
 
   // REST API: Kích hoạt hiệu ứng (1, 2, 3, 4)
   app.post("/api/trigger", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const effectNum = Number(req.body.effect);
     const config = EFFECT_CONFIGS[effectNum];
     if (!config) {
@@ -563,197 +604,185 @@ async function startServer() {
     }
 
     const serverNow = Date.now();
-    currentState = {
-      effect: effectNum,
-      action: "start",
-      duration: config.duration,
-      loopDuration: config.loopDuration || 0,
-      soundTrack: config.sound,
-      serverStartTime: serverNow,
-      timestamp: serverNow,
-    };
+    roomState.effect = effectNum;
+    roomState.action = "start";
+    roomState.duration = config.duration;
+    roomState.loopDuration = config.loopDuration || 0;
+    roomState.soundTrack = config.sound;
+    roomState.serverStartTime = serverNow;
+    roomState.timestamp = serverNow;
 
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "EFFECT_TRIGGERED",
-      state: currentState,
+      state: roomState,
       serverTime: serverNow,
       clientsCount: clients.size,
     });
 
-    res.json({ success: true, state: currentState, serverTime: serverNow });
+    res.json({ success: true, state: roomState, serverTime: serverNow });
   });
 
   // REST API: Dừng hiệu ứng
-  app.post("/api/stop", (_req, res) => {
+  app.post("/api/stop", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    currentState = {
-      effect: null,
-      action: "stop",
-      duration: 0,
-      loopDuration: 0,
-      soundTrack: "",
-      serverStartTime: serverNow,
-      timestamp: serverNow,
-    };
+    roomState.effect = null;
+    roomState.action = "stop";
+    roomState.duration = 0;
+    roomState.loopDuration = 0;
+    roomState.soundTrack = "";
+    roomState.serverStartTime = serverNow;
+    roomState.timestamp = serverNow;
 
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "EFFECT_STOPPED",
-      state: currentState,
+      state: roomState,
       serverTime: serverNow,
       clientsCount: clients.size,
     });
 
-    res.json({ success: true, state: currentState, serverTime: serverNow });
+    res.json({ success: true, state: roomState, serverTime: serverNow });
   });
 
   // REST API: Đặt lại trạng thái
   app.post("/api/reset", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    currentState = {
-      ...currentState,
-      effect: null,
-      action: "reset",
-      mode: req.body.mode || "white",
-      duration: 0,
-      loopDuration: 0,
-      soundTrack: "",
-      serverStartTime: serverNow,
-      timestamp: serverNow,
-      stageDisplay: { type: "IDLE", mode: req.body.mode || "white", timestamp: serverNow },
-    };
+    roomState.effect = null;
+    roomState.action = "reset";
+    roomState.mode = req.body.mode || "white";
+    roomState.duration = 0;
+    roomState.loopDuration = 0;
+    roomState.soundTrack = "";
+    roomState.serverStartTime = serverNow;
+    roomState.timestamp = serverNow;
+    roomState.stageDisplay = { type: "IDLE", mode: req.body.mode || "white", timestamp: serverNow };
 
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "RESET",
-      state: currentState,
+      state: roomState,
       serverTime: serverNow,
       clientsCount: clients.size,
     });
 
-    res.json({ success: true, state: currentState, serverTime: serverNow });
+    res.json({ success: true, state: roomState, serverTime: serverNow });
   });
 
   // REST API: Tạo mã phòng mới (6 chữ số)
   app.post("/api/room/create", (_req, res) => {
-    currentRoomCode = generateRoomCode();
-    votingState = {
-      roomId: currentRoomCode,
-      mode: "LOCKED",
-      votes: {},
-      connectedJudges: {},
-    };
-    currentState.roomCode = currentRoomCode;
-    currentState.voting = votingState;
-    console.log(`[Room REST] Tạo mã phòng mới: ${currentRoomCode}`);
-    broadcast({
-      type: "ROOM_UPDATED",
-      roomCode: currentRoomCode,
-      voting: votingState,
-      serverTime: Date.now(),
-    });
-    res.json({ success: true, roomCode: currentRoomCode, voting: votingState });
+    const newRoomCode = generateRoomCode();
+    const newRoom = getOrCreateRoom(newRoomCode);
+    console.log(`[Room REST] Tạo mã phòng mới: ${newRoomCode}`);
+    res.json({ success: true, roomCode: newRoomCode, state: newRoom });
   });
 
   // REST API: Kiểm tra mã phòng và đăng nhập Judge
   app.post("/api/room/verify", (req, res) => {
     const { roomId, seatId } = req.body;
     const seatNum = Number(seatId);
-    if (!roomId || roomId.toString() !== currentRoomCode.toString()) {
-      return res.status(400).json({ success: false, error: "Mã phòng không chính xác!" });
+    const cleanRoom = (roomId || "").toString().trim();
+    if (!cleanRoom || cleanRoom.length < 4) {
+      return res.status(400).json({ success: false, error: "Mã phòng không hợp lệ!" });
     }
+    const roomState = getOrCreateRoom(cleanRoom);
     if (!seatNum || seatNum < 1 || seatNum > 101) {
       return res.status(400).json({ success: false, error: "Vị trí không hợp lệ (Phải từ 1 đến 101)!" });
     }
     res.json({
       success: true,
-      roomCode: currentRoomCode,
+      roomCode: cleanRoom,
       seatId: seatNum,
-      votingMode: votingState.mode,
-      currentVote: votingState.votes[seatNum] || null,
+      votingMode: roomState.voting.mode,
+      currentVote: roomState.voting.votes[seatNum] || null,
     });
   });
 
   // REST API: Đặt chế độ bình chọn (NORMAL | VERSUS | LOCKED)
   app.post("/api/voting/mode", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const { mode, resetVotes } = req.body;
     if (!["NORMAL", "VERSUS", "LOCKED"].includes(mode)) {
       return res.status(400).json({ error: "Chế độ bình chọn không hợp lệ" });
     }
-    votingState.mode = mode;
+    roomState.voting.mode = mode;
     if (resetVotes) {
-      votingState.votes = {};
+      roomState.voting.votes = {};
     }
-    currentState.voting = votingState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "VOTING_MODE_CHANGED",
       mode,
-      voting: votingState,
+      voting: roomState.voting,
       serverTime: Date.now(),
     });
-    res.json({ success: true, mode, voting: votingState });
+    res.json({ success: true, mode, voting: roomState.voting });
   });
 
   // REST API: Gửi bình chọn từ Judge
   app.post("/api/voting/vote", (req, res) => {
-    const { roomId, seatId, vote } = req.body;
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
+    const { seatId, vote } = req.body;
     const seatNum = Number(seatId);
-    if (roomId !== currentRoomCode) {
-      return res.status(400).json({ error: "Sai mã phòng" });
-    }
     if (seatNum < 1 || seatNum > 101) {
       return res.status(400).json({ error: "Vị trí không hợp lệ" });
     }
-    if (votingState.mode === "LOCKED") {
+    if (roomState.voting.mode === "LOCKED") {
       return res.status(400).json({ error: "Bình chọn đang bị khóa" });
     }
-    votingState.votes[seatNum] = vote;
-    currentState.voting = votingState;
-    broadcast({
+    roomState.voting.votes[seatNum] = vote;
+    broadcastToRoom(roomId, {
       type: "VOTE_CAST",
       seatId: seatNum,
       vote,
-      voting: votingState,
+      voting: roomState.voting,
       serverTime: Date.now(),
     });
-    res.json({ success: true, seatId: seatNum, vote, voting: votingState });
+    res.json({ success: true, seatId: seatNum, vote, voting: roomState.voting });
   });
 
   // REST API: Hiện kết quả Thường trên Index
   app.post("/api/display/normal", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
     let chonCount = 0;
-    Object.values(votingState.votes).forEach((v) => {
+    Object.values(roomState.voting.votes).forEach((v) => {
       if (v === "CHON") chonCount++;
     });
 
     let finalScore = chonCount;
-    let votesToUse = { ...votingState.votes };
+    let votesToUse = { ...roomState.voting.votes };
     if (req.body && req.body.normalScore !== undefined && req.body.normalScore !== null && req.body.normalScore !== "") {
       finalScore = Number(req.body.normalScore);
       votesToUse = req.body.votes || generateRandomNormalVotes(finalScore);
     }
 
-    stageDisplayState = {
+    roomState.stageDisplay = {
       type: "NORMAL_RESULT",
       votes: votesToUse,
       totalScore: finalScore,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "SHOW_NORMAL_RESULT",
-      payload: stageDisplayState,
+      payload: roomState.stageDisplay,
       serverTime: serverNow,
     });
-    res.json({ success: true, stageDisplay: stageDisplayState });
+    res.json({ success: true, stageDisplay: roomState.stageDisplay });
   });
 
   // REST API: Hiện kết quả Đối đầu trên Index
   app.post("/api/display/versus", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
     let pinkCount = 0;
     let blueCount = 0;
-    Object.values(votingState.votes).forEach((v) => {
+    Object.values(roomState.voting.votes).forEach((v) => {
       if (v === "HONG") pinkCount++;
       if (v === "XANH") blueCount++;
     });
@@ -764,12 +793,12 @@ async function startServer() {
     const pinkScore = isManualPink ? Number(req.body.pinkScore) : pinkCount;
     const blueScore = isManualBlue ? Number(req.body.blueScore) : blueCount;
 
-    let votesToUse = { ...votingState.votes };
+    let votesToUse = { ...roomState.voting.votes };
     if (isManualPink || isManualBlue) {
       votesToUse = req.body.votes || generateRandomVersusVotes(pinkScore, blueScore);
     }
 
-    stageDisplayState = {
+    roomState.stageDisplay = {
       type: "VERSUS_RESULT",
       votes: votesToUse,
       pinkScore,
@@ -777,189 +806,215 @@ async function startServer() {
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "SHOW_VERSUS_RESULT",
-      payload: stageDisplayState,
+      payload: roomState.stageDisplay,
       serverTime: serverNow,
     });
-    res.json({ success: true, stageDisplay: stageDisplayState });
+    res.json({ success: true, stageDisplay: roomState.stageDisplay });
   });
 
   // REST API: Hiện sự bình chọn của giám khảo bất kỳ
   app.post("/api/display/specific-judges", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
     const judgeIds = Array.isArray(req.body.judgeIds) ? req.body.judgeIds : [];
-    stageDisplayState = {
+    roomState.stageDisplay = {
       type: "SPECIFIC_JUDGES",
       judgeIds,
-      votes: { ...votingState.votes },
+      votes: { ...roomState.voting.votes },
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "SHOW_SPECIFIC_JUDGES",
-      payload: stageDisplayState,
+      payload: roomState.stageDisplay,
       serverTime: serverNow,
     });
-    res.json({ success: true, stageDisplay: stageDisplayState });
+    res.json({ success: true, stageDisplay: roomState.stageDisplay });
   });
 
   // REST API: Reset điểm Thường (xóa vote CHON & KHONG_CHON)
-  app.post("/api/display/reset-score", (_req, res) => {
+  app.post("/api/display/reset-score", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    Object.keys(votingState.votes).forEach((k) => {
-      if (votingState.votes[k] === "CHON" || votingState.votes[k] === "KHONG_CHON") {
-        delete votingState.votes[k];
+    Object.keys(roomState.voting.votes).forEach((k) => {
+      if (roomState.voting.votes[k] === "CHON" || roomState.voting.votes[k] === "KHONG_CHON") {
+        delete roomState.voting.votes[k];
       }
     });
-    manualScores.normal = "";
-    currentState.manualScores = manualScores;
-    currentState.voting = votingState;
-    stageDisplayState = {
+    roomState.manualScores.normal = "";
+    roomState.stageDisplay = {
       type: "IDLE",
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "RESET_SCORE",
-      voting: votingState,
-      manualScores,
+      voting: roomState.voting,
+      manualScores: roomState.manualScores,
       serverTime: serverNow,
     });
-    res.json({ success: true, voting: votingState, manualScores });
+    res.json({ success: true, voting: roomState.voting, manualScores: roomState.manualScores });
   });
 
   // REST API: Reset tỉ số Tham khảo / Đối đầu (xóa vote HONG & XANH)
-  app.post("/api/display/reset-ref-score", (_req, res) => {
+  app.post("/api/display/reset-ref-score", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    Object.keys(votingState.votes).forEach((k) => {
-      if (votingState.votes[k] === "HONG" || votingState.votes[k] === "XANH") {
-        delete votingState.votes[k];
+    Object.keys(roomState.voting.votes).forEach((k) => {
+      if (roomState.voting.votes[k] === "HONG" || roomState.voting.votes[k] === "XANH") {
+        delete roomState.voting.votes[k];
       }
     });
-    manualScores.versusPink = "";
-    manualScores.versusBlue = "";
-    currentState.manualScores = manualScores;
-    currentState.voting = votingState;
-    stageDisplayState = {
+    roomState.manualScores.versusPink = "";
+    roomState.manualScores.versusBlue = "";
+    roomState.stageDisplay = {
       type: "IDLE",
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "RESET_REFERENCE_SCORE",
-      voting: votingState,
-      manualScores,
+      voting: roomState.voting,
+      manualScores: roomState.manualScores,
       serverTime: serverNow,
     });
-    res.json({ success: true, voting: votingState, manualScores });
+    res.json({ success: true, voting: roomState.voting, manualScores: roomState.manualScores });
   });
 
   // REST API: Cập nhật điểm nhập chay tự động
   app.post("/api/scores/manual", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     if (req.body) {
-      if (req.body.normal !== undefined) manualScores.normal = req.body.normal;
-      if (req.body.versusPink !== undefined) manualScores.versusPink = req.body.versusPink;
-      if (req.body.versusBlue !== undefined) manualScores.versusBlue = req.body.versusBlue;
+      if (req.body.normal !== undefined) roomState.manualScores.normal = req.body.normal;
+      if (req.body.versusPink !== undefined) roomState.manualScores.versusPink = req.body.versusPink;
+      if (req.body.versusBlue !== undefined) roomState.manualScores.versusBlue = req.body.versusBlue;
     }
-    currentState.manualScores = manualScores;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "MANUAL_SCORES_UPDATED",
-      manualScores,
+      manualScores: roomState.manualScores,
       serverTime: Date.now(),
     });
-    res.json({ success: true, manualScores });
+    res.json({ success: true, manualScores: roomState.manualScores });
   });
 
   // REST API: Reset tỉ số Khán giả
-  app.post("/api/display/reset-audience-score", (_req, res) => {
+  app.post("/api/display/reset-audience-score", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    audienceScore = { pink: 0, blue: 0 };
-    currentState.audienceScore = audienceScore;
-    stageDisplayState = {
+    roomState.audienceScore = { pink: 0, blue: 0 };
+    roomState.stageDisplay = {
       type: "IDLE",
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "RESET_AUDIENCE_SCORE",
-      audienceScore,
+      audienceScore: roomState.audienceScore,
       serverTime: serverNow,
     });
-    res.json({ success: true, audienceScore });
+    res.json({ success: true, audienceScore: roomState.audienceScore });
   });
 
   // REST API: Hiện tỉ số tham khảo trên Index
-  app.post("/api/display/reference", (_req, res) => {
+  app.post("/api/display/reference", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
     let pinkCount = 0;
     let blueCount = 0;
-    Object.values(votingState.votes).forEach((v) => {
-      if (v === "HONG") pinkCount++;
-      if (v === "XANH") blueCount++;
-    });
-    stageDisplayState = {
+
+    if (req.body && req.body.pink !== undefined && req.body.pink !== "") {
+      pinkCount = Number(req.body.pink) || 0;
+    } else if (req.body && req.body.scoreA !== undefined && req.body.scoreA !== "") {
+      pinkCount = Number(req.body.scoreA) || 0;
+    } else if (roomState.manualScores.versusPink !== "") {
+      pinkCount = Number(roomState.manualScores.versusPink) || 0;
+    } else {
+      Object.values(roomState.voting.votes).forEach((v) => {
+        if (v === "HONG") pinkCount++;
+      });
+    }
+
+    if (req.body && req.body.blue !== undefined && req.body.blue !== "") {
+      blueCount = Number(req.body.blue) || 0;
+    } else if (req.body && req.body.scoreB !== undefined && req.body.scoreB !== "") {
+      blueCount = Number(req.body.scoreB) || 0;
+    } else if (roomState.manualScores.versusBlue !== "") {
+      blueCount = Number(roomState.manualScores.versusBlue) || 0;
+    } else {
+      Object.values(roomState.voting.votes).forEach((v) => {
+        if (v === "XANH") blueCount++;
+      });
+    }
+
+    roomState.stageDisplay = {
       type: "REFERENCE_SCORE",
       scoreA: pinkCount,
       scoreB: blueCount,
+      pink: pinkCount,
+      blue: blueCount,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "SHOW_REFERENCE_SCORE",
-      payload: stageDisplayState,
+      payload: roomState.stageDisplay,
       serverTime: serverNow,
     });
-    res.json({ success: true, stageDisplay: stageDisplayState });
+    res.json({ success: true, stageDisplay: roomState.stageDisplay });
   });
 
   // REST API: Lưu tỉ số khán giả
   app.post("/api/audience/set", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const { pink, blue } = req.body;
-    audienceScore = {
+    roomState.audienceScore = {
       pink: Number(pink) || 0,
       blue: Number(blue) || 0,
     };
-    currentState.audienceScore = audienceScore;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "AUDIENCE_SCORE_UPDATED",
-      audienceScore,
+      audienceScore: roomState.audienceScore,
       serverTime: Date.now(),
     });
-    res.json({ success: true, audienceScore });
+    res.json({ success: true, audienceScore: roomState.audienceScore });
   });
 
   // REST API: Hiện tỉ số khán giả trên Index
-  app.post("/api/display/audience", (_req, res) => {
+  app.post("/api/display/audience", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    stageDisplayState = {
+    roomState.stageDisplay = {
       type: "AUDIENCE_SCORE",
-      pink: audienceScore.pink,
-      blue: audienceScore.blue,
+      pink: roomState.audienceScore.pink,
+      blue: roomState.audienceScore.blue,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "SHOW_AUDIENCE_SCORE",
-      payload: stageDisplayState,
+      payload: roomState.stageDisplay,
       serverTime: serverNow,
     });
-    res.json({ success: true, stageDisplay: stageDisplayState });
+    res.json({ success: true, stageDisplay: roomState.stageDisplay });
   });
 
   // REST API: Xóa / Ẩn hiển thị kết quả
-  app.post("/api/display/clear", (_req, res) => {
+  app.post("/api/display/clear", (req, res) => {
+    const roomId = getReqRoomId(req);
+    const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
-    stageDisplayState = {
+    roomState.stageDisplay = {
       type: "IDLE",
       timestamp: serverNow,
     };
-    currentState.stageDisplay = stageDisplayState;
-    broadcast({
+    broadcastToRoom(roomId, {
       type: "CLEAR_STAGE_DISPLAY",
       serverTime: serverNow,
     });

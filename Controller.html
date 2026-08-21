@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng Điều Khiển Sân Khấu 101 Ô & Ban Giám Khảo</title>
+  <title>TÔI LÀ NGƯỜI CHIẾN THẮNG - Controller</title>
   <style>
-    /* Yêu cầu bắt buộc từ người dùng: Ở file Controller, dùng font-weight: bold !important; cho * */
+    /* Bắt buộc từ người dùng: font-weight bold !important */
     * {
       font-weight: bold !important;
       box-sizing: border-box;
@@ -15,542 +15,472 @@
     }
 
     body {
-      background: #090d24;
+      background: #070a1e;
       color: #f8fafc;
-      min-height: 100vh;
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      gap: 20px;
+      padding: 8px 12px;
+      gap: 6px;
     }
 
-    /* Header & Bar thông tin */
+    /* Header Bar thu gọn, nằm gọn trong 1 dòng */
     .header-bar {
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      background: #111738;
-      border: 2px solid #3b427a;
-      border-radius: 16px;
-      padding: 16px 22px;
-      gap: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      background: #0f1538;
+      border: 1.5px solid #303a74;
+      border-radius: 10px;
+      padding: 6px 14px;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
     }
 
     .title-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .title-group h1 {
-      font-size: 22px;
-      color: #ffffff;
-      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .title-group p {
-      font-size: 13px;
-      color: #94a3b8;
+    .title-group h1 {
+      font-size: 15px;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .room-manager-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .room-code-box {
+      background: #040614;
+      border: 1.5px solid #a855f7;
+      padding: 3px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: #ffd269;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+      line-height: 1.2;
     }
 
     .status-group {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .connection-badge {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: #1e293b;
-      padding: 8px 16px;
+      gap: 6px;
+      background: #17203d;
+      padding: 4px 10px;
       border-radius: 9999px;
-      border: 1.5px solid #334155;
-      font-size: 13px;
+      border: 1px solid #334155;
+      font-size: 11px;
+      white-space: nowrap;
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #10b981;
-      box-shadow: 0 0 10px #10b981;
+      box-shadow: 0 0 8px #10b981;
     }
 
     .status-dot.disconnected {
       background: #ef4444;
-      box-shadow: 0 0 10px #ef4444;
-    }
-
-    .btn-open-stage {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-size: 13px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-      transition: all 0.2s ease;
-    }
-
-    .btn-open-stage:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-    }
-
-    .btn-open-judge {
-      background: linear-gradient(135deg, #db2777, #be185d);
-      color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-size: 13px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(219, 39, 119, 0.4);
-      transition: all 0.2s ease;
-    }
-
-    /* Quản Lý Mã Phòng & Giám Khảo */
-    .room-manager-bar {
-      background: linear-gradient(135deg, #182252, #10163a);
-      border: 2px solid #38458a;
-      border-radius: 16px;
-      padding: 18px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    .room-code-display {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .room-code-box {
-      background: #060919;
-      border: 2px solid #a855f7;
-      padding: 8px 18px;
-      border-radius: 12px;
-      font-size: 24px;
-      letter-spacing: 4px;
-      color: #ffd269;
-      box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+      box-shadow: 0 0 8px #ef4444;
     }
 
     .voting-status-pill {
-      padding: 6px 14px;
+      padding: 4px 10px;
       border-radius: 9999px;
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
     .voting-status-pill.locked { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; }
     .voting-status-pill.normal { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; color: #4ade80; }
     .voting-status-pill.versus { background: rgba(236, 72, 153, 0.2); border: 1px solid #ec4899; color: #f472b6; }
 
-    /* Bảng Điều Khiển Bình Chọn & Hiển Thị Kết Quả */
-    .section-card {
-      background: #111738;
-      border: 2px solid #28336d;
-      border-radius: 16px;
-      padding: 20px 24px;
+    .btn-top {
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 7px;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .btn-top:hover { transform: translateY(-1px); }
+
+    .btn-open-stage {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+    .btn-open-judge {
+      background: linear-gradient(135deg, #db2777, #be185d);
+      box-shadow: 0 2px 8px rgba(219, 39, 119, 0.4);
+    }
+    .btn-top-aux {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+    }
+    .btn-top-aux:hover { background: #334155; color: #ffffff; }
+
+    /* Layout chính 2 cột chiếm toàn bộ khung hình 100vh */
+    .dashboard-main {
+      display: grid;
+      grid-template-columns: 1.18fr 1fr;
+      gap: 8px;
+      flex: 1;
+      min-height: 0; /* Cho phép co giãn linh hoạt */
+    }
+
+    /* Cột điều khiển & điểm số (Trái) */
+    .left-col {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 6px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    /* Cột hiệu ứng & màn hình trực tiếp (Phải) */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    /* Tùy chỉnh thanh cuộn siêu mỏng khi cần */
+    .left-col::-webkit-scrollbar, .right-col::-webkit-scrollbar {
+      width: 4px;
+    }
+    .left-col::-webkit-scrollbar-thumb, .right-col::-webkit-scrollbar-thumb {
+      background: #28336d;
+      border-radius: 4px;
+    }
+
+    .section-card {
+      background: #0f1538;
+      border: 1.5px solid #232d64;
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
     }
 
     .section-title {
-      font-size: 17px;
-      color: #ffffff;
+      font-size: 12px;
+      color: #38bdf8;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
+    /* Grid nút bấm gọn gàng */
     .action-btn-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
     }
 
     .btn-action {
-      padding: 16px 18px;
-      border-radius: 12px;
+      padding: 7px 8px;
+      border-radius: 8px;
       border: none;
-      font-size: 15px;
+      font-size: 11px;
       cursor: pointer;
       color: #ffffff;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: all 0.15s ease;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      gap: 2px;
+      transition: all 0.12s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       text-align: center;
+      line-height: 1.2;
     }
+    .btn-action:active { transform: scale(0.98); }
 
-    .btn-action:active {
-      transform: scale(0.98);
-    }
-
-    /* Màu các nút bấm theo chức năng */
     .btn-vote-normal {
       background: linear-gradient(135deg, #16a34a, #15803d);
-      border: 1.5px solid #22c55e;
+      border: 1px solid #22c55e;
     }
-    .btn-vote-normal:hover {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
-    }
+    .btn-vote-normal:hover { background: linear-gradient(135deg, #22c55e, #16a34a); }
 
     .btn-vote-versus {
       background: linear-gradient(135deg, #ec4899 0%, #3b82f6 100%);
-      border: 1.5px solid #c084fc;
+      border: 1px solid #c084fc;
     }
-    .btn-vote-versus:hover {
-      background: linear-gradient(135deg, #f472b6 0%, #60a5fa 100%);
-      box-shadow: 0 0 18px rgba(192, 132, 252, 0.6);
-    }
+    .btn-vote-versus:hover { background: linear-gradient(135deg, #f472b6 0%, #60a5fa 100%); }
 
     .btn-vote-lock {
       background: linear-gradient(135deg, #dc2626, #991b1b);
-      border: 1.5px solid #ef4444;
+      border: 1px solid #ef4444;
     }
-    .btn-vote-lock:hover {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-    }
+    .btn-vote-lock:hover { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
     .btn-show-normal {
       background: linear-gradient(135deg, #059669, #047857);
-      border: 1.5px solid #10b981;
+      border: 1px solid #10b981;
     }
-    .btn-show-normal:hover {
-      background: linear-gradient(135deg, #10b981, #059669);
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-    }
+    .btn-show-normal:hover { background: linear-gradient(135deg, #10b981, #059669); }
 
     .btn-show-versus {
       background: linear-gradient(135deg, #be185d 0%, #1d4ed8 100%);
-      border: 1.5px solid #e879f9;
+      border: 1px solid #e879f9;
     }
-    .btn-show-versus:hover {
-      background: linear-gradient(135deg, #db2777 0%, #2563eb 100%);
-      box-shadow: 0 0 18px rgba(232, 121, 249, 0.6);
-    }
+    .btn-show-versus:hover { background: linear-gradient(135deg, #db2777 0%, #2563eb 100%); }
 
     .btn-show-ref {
       background: linear-gradient(135deg, #d97706, #b45309);
-      border: 1.5px solid #f59e0b;
+      border: 1px solid #f59e0b;
     }
-    .btn-show-ref:hover {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
-    }
+    .btn-show-ref:hover { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
     .btn-input-audience {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
-      border: 1.5px solid #818cf8;
+      border: 1px solid #818cf8;
     }
-    .btn-input-audience:hover {
-      background: linear-gradient(135deg, #818cf8, #6366f1);
-      box-shadow: 0 0 15px rgba(129, 140, 248, 0.5);
-    }
+    .btn-input-audience:hover { background: linear-gradient(135deg, #818cf8, #6366f1); }
 
     .btn-show-audience {
       background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      border: 1.5px solid #a78bfa;
+      border: 1px solid #a78bfa;
     }
-    .btn-show-audience:hover {
-      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
-      box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+    .btn-show-audience:hover { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+
+    /* Hộp Nhập Điểm Thường & Đối Đầu Thu Gọn */
+    .inline-input-row {
+      background: #080c25;
+      border: 1px solid #202b60;
+      border-radius: 8px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
-    /* Các nút Reset Điểm & Tỉ Số */
+    .inline-input-row.normal { border-color: #22c55e; }
+    .inline-input-row.versus { border-color: #a855f7; }
+
+    .input-pill {
+      background: #111738;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: #ffffff;
+      font-size: 13px;
+      text-align: center;
+      outline: none;
+    }
+    .input-pill.normal { border-color: #22c55e; color: #4ade80; width: 80px; }
+    .input-pill.pink { border-color: #ec4899; color: #f472b6; width: 65px; }
+    .input-pill.blue { border-color: #3b82f6; color: #60a5fa; width: 65px; }
+
+    /* Reset buttons grid */
     .reset-btn-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
     }
 
     .btn-reset-item {
       background: linear-gradient(135deg, #7c2d12, #431407);
-      border: 1.5px solid #f97316;
+      border: 1px solid #f97316;
       color: #fed7aa;
-      padding: 12px 14px;
-      border-radius: 10px;
+      padding: 5px 6px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 10.5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: all 0.15s ease;
+      gap: 4px;
+      transition: all 0.12s ease;
+      white-space: nowrap;
     }
-    .btn-reset-item:hover {
-      background: linear-gradient(135deg, #ea580c, #c2410c);
-      color: #ffffff;
-      box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);
+    .btn-reset-item:hover { background: linear-gradient(135deg, #ea580c, #c2410c); color: #ffffff; }
+
+    /* Thống kê Ban Giám Khảo (6 ô) */
+    .judge-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
     }
 
-    /* Box Nhập Điểm Thường (Chay) */
-    .normal-input-container {
-      background: #090e29;
-      border: 1.5px solid #22c55e;
-      border-radius: 12px;
-      padding: 14px 18px;
+    .stat-pill {
+      background: #131a40;
+      border: 1px solid #28346e;
+      border-radius: 6px;
+      padding: 4px 6px;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .normal-inputs-flex {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .normal-input-field {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .normal-input-field label {
-      font-size: 14px;
-      color: #4ade80;
-    }
-
-    .normal-input-field input {
-      width: 110px;
-      background: #111738;
-      border: 1.5px solid #22c55e;
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: #4ade80;
-      font-size: 18px;
+      justify-content: center;
+      gap: 1px;
       text-align: center;
-      outline: none;
     }
 
-    /* Box Nhập Tỉ Số Đối Đầu */
-    .versus-input-container {
-      background: #090e29;
-      border: 1.5px solid #a855f7;
-      border-radius: 12px;
-      padding: 14px 18px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+    .stat-label {
+      font-size: 9px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .versus-inputs-flex {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .versus-input-field {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .versus-input-field label {
-      font-size: 14px;
-    }
-    .versus-input-field label.pink { color: #f472b6; }
-    .versus-input-field label.blue { color: #60a5fa; }
-
-    .versus-input-field input {
-      width: 90px;
-      background: #111738;
-      border: 1.5px solid #475569;
-      border-radius: 8px;
-      padding: 8px 12px;
+    .stat-value {
+      font-size: 13px;
       color: #ffffff;
-      font-size: 18px;
-      text-align: center;
-      outline: none;
+      line-height: 1.1;
     }
-    .versus-input-field input.pink { border-color: #ec4899; color: #f472b6; }
-    .versus-input-field input.blue { border-color: #3b82f6; color: #60a5fa; }
 
-    /* Mục Hiện sự bình chọn của giám khảo bất kỳ */
+    /* Mục Giám Khảo Bất Kỳ */
+    .specific-box {
+      background: #080c25;
+      border: 1px solid #232d64;
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
     .specific-inputs-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 10px;
-      max-height: 220px;
+      grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+      gap: 5px;
+      max-height: 75px;
       overflow-y: auto;
-      padding: 12px;
-      background: #090e29;
-      border: 1.5px solid #334155;
-      border-radius: 12px;
+      padding: 4px;
+      background: #0d1233;
+      border: 1px solid #222d63;
+      border-radius: 6px;
     }
 
     .specific-seat-item {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
 
     .specific-seat-item label {
-      font-size: 11px;
+      font-size: 9px;
       color: #94a3b8;
     }
 
     .specific-seat-item input {
-      background: #182252;
-      border: 1.5px solid #6366f1;
-      border-radius: 8px;
-      padding: 8px;
+      background: #172049;
+      border: 1px solid #6366f1;
+      border-radius: 4px;
+      padding: 3px;
       color: #ffd269;
-      font-size: 16px;
+      font-size: 12px;
       text-align: center;
       outline: none;
     }
 
     .btn-confirm-specific {
       background: linear-gradient(135deg, #059669, #0d9488);
-      border: 1.5px solid #14b8a6;
+      border: 1px solid #14b8a6;
       color: #ffffff;
-      padding: 14px 20px;
-      border-radius: 10px;
-      font-size: 15px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4);
-      transition: all 0.15s ease;
-    }
-    .btn-confirm-specific:hover {
-      background: linear-gradient(135deg, #10b981, #14b8a6);
-      box-shadow: 0 0 18px rgba(20, 184, 166, 0.6);
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
+      transition: all 0.12s ease;
     }
 
-    /* Thống kê Ban Giám Khảo (1 - 101) */
-    .judge-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-    }
-
-    .stat-pill {
-      background: #182046;
-      border: 1px solid #2f3c77;
-      border-radius: 12px;
-      padding: 10px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: #94a3b8;
-      text-transform: uppercase;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      color: #ffffff;
-    }
-
-    /* Grid 4 Hiệu Ứng Sân Khấu */
+    /* 4 Hiệu Ứng Sân Khấu (Grid 2x2 siêu gọn) */
     .effects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
     }
 
     .effect-card {
-      background: #131a42;
-      border: 2px solid #28336d;
-      border-radius: 16px;
-      padding: 20px;
+      background: #0f1538;
+      border: 1.5px solid #232d64;
+      border-radius: 8px;
+      padding: 6px 8px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 14px;
-      transition: all 0.2s ease;
-    }
-
-    .effect-card:hover {
-      border-color: #6366f1;
-      transform: translateY(-2px);
-    }
-
-    .effect-card.active-running {
-      border-color: #ffd269 !important;
-      background: linear-gradient(135deg, #202b66, #151d4d) !important;
-      box-shadow: 0 0 25px rgba(255, 210, 105, 0.6) !important;
+      gap: 4px;
     }
 
     .effect-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
+      padding: 2px 6px;
       border-radius: 9999px;
-      font-size: 11px;
+      font-size: 9px;
       text-transform: uppercase;
       width: fit-content;
     }
 
-    .badge-e1 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1.5px solid #f59e0b; }
-    .badge-e2 { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1.5px solid #a855f7; }
-    .badge-e3 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1.5px solid #3b82f6; }
-    .badge-e4 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1.5px solid #ef4444; }
+    .badge-e1 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+    .badge-e2 { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+    .badge-e3 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .badge-e4 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
 
     .btn-trigger {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 10px;
+      padding: 6px 8px;
+      border-radius: 6px;
       border: none;
-      font-size: 15px;
+      font-size: 11px;
       cursor: pointer;
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 4px;
+      transition: all 0.12s ease;
     }
 
     .btn-e1 { background: linear-gradient(135deg, #d97706, #b45309); }
@@ -558,58 +488,62 @@
     .btn-e3 { background: linear-gradient(135deg, #1d4ed8, #1e40af); }
     .btn-e4 { background: linear-gradient(135deg, #b91c1c, #991b1b); }
 
-    /* Thanh Điều Khiển Phụ & Dừng */
+    /* Thanh Nút Phụ & Dừng Khẩn Cấp */
     .controls-bar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      justify-content: space-between;
+      gap: 6px;
       align-items: center;
-      background: #111738;
-      border: 2px solid #2d3875;
-      border-radius: 16px;
-      padding: 16px 22px;
+      justify-content: space-between;
+      background: #0f1538;
+      border: 1.5px solid #28336d;
+      border-radius: 8px;
+      padding: 5px 10px;
     }
 
     .btn-stop-all {
       background: linear-gradient(135deg, #ef4444, #b91c1c);
       color: white;
       border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 15px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 11px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+      white-space: nowrap;
     }
 
     .btn-aux {
-      background: #1e293b;
+      background: #17203d;
       color: #cbd5e1;
-      border: 1.5px solid #475569;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 13px;
+      border: 1px solid #3b487c;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
       cursor: pointer;
+      white-space: nowrap;
     }
-    .btn-aux:hover { background: #334155; color: #ffffff; }
+    .btn-aux:hover { background: #263363; color: #ffffff; }
 
-    /* Khung Xem Trước Sân Khấu (Live Split Preview) */
+    /* Khung Xem Trực Tiếp Sân Khấu (Live Iframe Preview) */
     .preview-section {
-      background: #111738;
-      border: 2px solid #28336d;
-      border-radius: 16px;
-      padding: 18px 22px;
+      background: #0f1538;
+      border: 1.5px solid #232d64;
+      border-radius: 8px;
+      padding: 6px 8px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 4px;
+      flex: 1;
+      min-height: 120px;
     }
 
     .preview-iframe-wrapper {
       width: 100%;
-      height: 380px;
-      border-radius: 12px;
+      flex: 1;
+      min-height: 110px;
+      border-radius: 6px;
       overflow: hidden;
-      border: 2px solid #3b427a;
+      border: 1px solid #2f3b75;
       background: #02072a;
     }
 
@@ -622,98 +556,50 @@
     /* Modal Popup Nhập Tỉ Số Khán Giả */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(4, 7, 24, 0.85);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(6px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      padding: 20px;
+      padding: 16px;
     }
 
     .modal-card {
       background: #111738;
       border: 2px solid #a855f7;
-      border-radius: 20px;
-      padding: 28px 24px;
+      border-radius: 16px;
+      padding: 20px 22px;
       width: 100%;
-      max-width: 440px;
+      max-width: 380px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.3);
+      gap: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(168, 85, 247, 0.3);
     }
 
-    .modal-title {
-      font-size: 20px;
-      color: #ffffff;
-      text-align: center;
-    }
-
-    .modal-inputs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .modal-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .modal-input-group label {
-      font-size: 13px;
-    }
-
+    .modal-title { font-size: 16px; color: #ffffff; text-align: center; }
+    .modal-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-input-group { display: flex; flex-direction: column; gap: 4px; }
+    .modal-input-group label { font-size: 11px; }
     .modal-input-group label.pink { color: #f472b6; }
     .modal-input-group label.blue { color: #60a5fa; }
-
     .modal-input {
-      width: 100%;
-      background: #090d24;
-      border: 2px solid #334155;
-      border-radius: 12px;
-      padding: 14px;
-      color: #ffffff;
-      font-size: 22px;
-      text-align: center;
-      outline: none;
+      width: 100%; background: #090d24; border: 1.5px solid #334155;
+      border-radius: 8px; padding: 8px; color: #ffffff; font-size: 18px;
+      text-align: center; outline: none;
     }
-
     .modal-input.pink { border-color: #ec4899; color: #f472b6; }
     .modal-input.blue { border-color: #3b82f6; color: #60a5fa; }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
     .btn-modal-save {
-      flex: 1;
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #ffffff;
-      padding: 14px;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-      cursor: pointer;
+      flex: 1; background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff; padding: 10px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer;
     }
-
     .btn-modal-close {
-      flex: 1;
-      background: #334155;
-      color: #cbd5e1;
-      padding: 14px;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-      cursor: pointer;
+      flex: 1; background: #334155; color: #cbd5e1;
+      padding: 10px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer;
     }
   </style>
 </head>
@@ -722,318 +608,258 @@
   <!-- Header Bar -->
   <div class="header-bar">
     <div class="title-group">
-      <h1>🎛️ BẢNG ĐIỀU KHIỂN SÂN KHẤU 101 Ô</h1>
-      <p>Hệ thống đồng bộ ánh sáng, âm thanh sân khấu & biểu quyết Ban Giám Khảo</p>
+      <h1>🎛️ CONTROLLER 101 Ô</h1>
+      <div class="room-manager-group">
+        <span style="font-size: 11px; color: #94a3b8;">PHÒNG:</span>
+        <span class="room-code-box" id="displayRoomCode">101101</span>
+        <button class="btn-top btn-top-aux" onclick="createNewRoom()">🔄 Đổi mã</button>
+        <button class="btn-top btn-top-aux" onclick="copyJudgeLink()">📋 Link GK</button>
+      </div>
     </div>
 
     <div class="status-group">
+      <span class="voting-status-pill locked" id="votingStatusPill">🔒 ĐANG KHÓA</span>
       <div class="connection-badge">
         <span class="status-dot" id="statusDot"></span>
-        <span id="connectionText">Đang kết nối Server...</span>
+        <span id="connectionText">Online | 0ms</span>
       </div>
-
-      <button class="btn-open-stage" onclick="openStageWindow()">
-        🖥️ Mở Sân Khấu (index.html)
-      </button>
-
-      <button class="btn-open-judge" onclick="openJudgeWindow()">
-        📱 Mở Giám Khảo (Judge.html)
-      </button>
+      <button class="btn-top btn-open-stage" onclick="openStageWindow()">🖥️ Sân Khấu</button>
+      <button class="btn-top btn-open-judge" onclick="openJudgeWindow()">📱 Giám Khảo</button>
     </div>
   </div>
 
-  <!-- Quản Lý Mã Phòng & Trạng Thái Ban Giám Khảo -->
-  <div class="room-manager-bar">
-    <div class="room-code-display">
-      <span style="font-size: 13px; color: #cbd5e1;">MÃ PHÒNG (6 SỐ):</span>
-      <span class="room-code-box" id="displayRoomCode">101101</span>
-      <button class="btn-aux" onclick="createNewRoom()">
-        🔄 Tạo Mã Mới
-      </button>
-      <button class="btn-aux" onclick="copyJudgeLink()">
-        📋 Copy Link Giám Khảo
-      </button>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 14px;">
-      <span style="font-size: 13px; color: #94a3b8;">TRẠNG THÁI BÌNH CHỌN:</span>
-      <span class="voting-status-pill locked" id="votingStatusPill">🔒 ĐANG KHÓA</span>
-    </div>
-  </div>
-
-  <!-- BẢNG ĐIỀU KHIỂN BÌNH CHỌN & HIỂN THỊ KẾT QUẢ SÂN KHẤU -->
-  <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">🗳️ ĐIỀU KHIỂN BÌNH CHỌN & KẾT QUẢ SÂN KHẤU (INDEX.HTML)</span>
-      <span style="font-size: 12px; color: #94a3b8;">Đồng bộ tức thì với 101 Giám khảo và Màn hình Sân khấu</span>
-    </div>
-
-    <!-- Hàng nút 1: Mở / Khóa Bình Chọn -->
-    <div style="display: flex; flex-direction: column; gap: 8px;">
-      <span style="font-size: 12px; color: #38bdf8;">1. ĐIỀU KHIỂN BÌNH CHỌN (MỞ CHO BAN GIÁM KHẢO BẤM):</span>
-      <div class="action-btn-grid">
-        <button class="btn-action btn-vote-normal" onclick="setVotingMode('NORMAL')">
-          🟢 Mở bình chọn (Thường)<br><small style="font-size: 11px; opacity: 0.9;">Mở nút Chọn & Không chọn</small>
-        </button>
-
-        <button class="btn-action btn-vote-versus" onclick="setVotingMode('VERSUS')">
-          ⚡ Mở bình chọn (Đối đầu)<br><small style="font-size: 11px; opacity: 0.9;">Mở nút Màu xanh & Màu hồng</small>
-        </button>
-
-        <button class="btn-action btn-vote-lock" onclick="setVotingMode('LOCKED')">
-          🔒 Khóa bình chọn<br><small style="font-size: 11px; opacity: 0.9;">Khóa toàn bộ nút bấm</small>
-        </button>
-      </div>
-    </div>
-
-    <!-- Hàng nút 2: Hiển Thị Kết Quả Lên Sân Khấu -->
-    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
-      <span style="font-size: 12px; color: #a855f7;">2. HIỂN THỊ KẾT QUẢ & TỈ SỐ TRÊN SÂN KHẤU (INDEX.HTML):</span>
+  <!-- Dashboard Main Grid (Nằm gọn trong 1 khung hình) -->
+  <div class="dashboard-main">
+    
+    <!-- CỘT TRÁI: Bình chọn & Điểm số & Giám khảo bất kỳ -->
+    <div class="left-col">
       
-      <!-- Hộp Nhập Chay Điểm Thường -->
-      <div class="normal-input-container">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="color: #4ade80; font-size: 14px;">🟢 NHẬP CHAY ĐIỂM (THƯỜNG):</span>
-          <small style="color: #94a3b8; font-size: 11px;">(Nhập số điểm để random vị trí các đèn xanh tương ứng hoặc để trống để lấy theo lượt bình chọn thực tế)</small>
+      <!-- Mục 1 & 2 & 3: Điều khiển bình chọn & Hiển thị kết quả & Reset -->
+      <div class="section-card">
+        <!-- 1. Điều khiển bình chọn -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="section-title">🗳️ 1. Mở / Khóa Bình Chọn</span>
+          <span style="font-size: 10px; color: #94a3b8;">Đồng bộ 101 Giám khảo</span>
         </div>
-        <div class="normal-inputs-flex">
-          <div class="normal-input-field">
-            <label>🟢 Điểm (0-101):</label>
-            <input type="number" id="inputNormalScore" placeholder="Tự động" min="0" max="101" />
-          </div>
-          <button type="button" class="btn-action btn-show-normal" style="padding: 10px 18px; font-size: 14px;" onclick="showNormalResult()">
-            📊 Hiện kết quả (Thường)
+        <div class="action-btn-grid">
+          <button class="btn-action btn-vote-normal" onclick="setVotingMode('NORMAL')">
+            <span>🟢 Mở Thường</span>
+            <small style="font-size: 9.5px; opacity: 0.85;">Chọn / Không chọn</small>
+          </button>
+          <button class="btn-action btn-vote-versus" onclick="setVotingMode('VERSUS')">
+            <span>⚡ Mở Đối Đầu</span>
+            <small style="font-size: 9.5px; opacity: 0.85;">Hồng / Xanh</small>
+          </button>
+          <button class="btn-action btn-vote-lock" onclick="setVotingMode('LOCKED')">
+            <span>🔒 Khóa Bình Chọn</span>
+            <small style="font-size: 9.5px; opacity: 0.85;">Khóa nút bấm</small>
           </button>
         </div>
-      </div>
 
-      <!-- Hộp Nhập Tỉ Số Đối Đầu -->
-      <div class="versus-input-container">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="color: #ffd269; font-size: 14px;">⚡ TỈ SỐ ĐỐI ĐẦU:</span>
-          <small style="color: #94a3b8; font-size: 11px;">(Nhập số trực tiếp để random vị trí các ô Hồng & Xanh, hoặc để trống để lấy theo lượt bình chọn thực tế)</small>
+        <!-- 2. Hiển thị kết quả & Điểm số -->
+        <span class="section-title" style="margin-top: 2px; color: #a855f7;">📊 2. Hiển Thị Kết Quả & Tỉ Số Lên Index</span>
+        
+        <!-- Nhập chay điểm thường -->
+        <div class="inline-input-row normal">
+          <span style="color: #4ade80; font-size: 11px;">🟢 NHẬP CHAY ĐIỂM (THƯỜNG):</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="number" class="input-pill normal" id="inputNormalScore" placeholder="Tự động" min="0" max="101" />
+            <button type="button" class="btn-action btn-show-normal" style="padding: 4px 10px; font-size: 11px;" onclick="showNormalResult()">
+              📊 Hiện kết quả (Thường)
+            </button>
+          </div>
         </div>
-        <div class="versus-inputs-flex">
-          <div class="versus-input-field">
-            <label class="pink">💖 Hồng:</label>
-            <input type="number" id="inputVersusPink" placeholder="Tự động" min="0" />
+
+        <!-- Nhập chay tỉ số đối đầu -->
+        <div class="inline-input-row versus">
+          <span style="color: #ffd269; font-size: 11px;">⚡ TỈ SỐ ĐỐI ĐẦU:</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="number" class="input-pill pink" id="inputVersusPink" placeholder="Hồng" min="0" />
+            <input type="number" class="input-pill blue" id="inputVersusBlue" placeholder="Xanh" min="0" />
+            <button type="button" class="btn-action btn-show-versus" style="padding: 4px 10px; font-size: 11px;" onclick="showVersusResult()">
+              🏆 Hiện kết quả (Đối đầu)
+            </button>
           </div>
-          <div class="versus-input-field">
-            <label class="blue">🔷 Xanh:</label>
-            <input type="number" id="inputVersusBlue" placeholder="Tự động" min="0" />
-          </div>
-          <button type="button" class="btn-action btn-show-versus" style="padding: 10px 18px; font-size: 14px;" onclick="showVersusResult()">
-            🏆 Hiện kết quả (Đối đầu)
+        </div>
+
+        <!-- 3 Nút Tỉ số phụ -->
+        <div class="action-btn-grid">
+          <button class="btn-action btn-show-ref" onclick="showReferenceScore()">
+            <span>🔀 Tỉ số tham khảo</span>
+            <small style="font-size: 9px; opacity: 0.85;">Đổi chỗ mỗi 1s</small>
+          </button>
+          <button class="btn-action btn-input-audience" onclick="openAudienceModal()">
+            <span>✏️ Nhập tỉ số khán giả</span>
+            <small style="font-size: 9px; opacity: 0.85;">Nhập số Hồng / Xanh</small>
+          </button>
+          <button class="btn-action btn-show-audience" onclick="showAudienceScore()">
+            <span>👥 Hiện tỉ số khán giả</span>
+            <small style="font-size: 9px; opacity: 0.85;">Hiện lên sân khấu</small>
           </button>
         </div>
+
+        <!-- 3. Các nút Reset điểm -->
+        <div class="reset-btn-grid" style="margin-top: 2px;">
+          <button type="button" class="btn-reset-item" onclick="resetStageScore()">
+            🔄 Reset điểm (Thường)
+          </button>
+          <button type="button" class="btn-reset-item" onclick="resetReferenceScore()">
+            🔄 Reset tỉ số (Tham khảo)
+          </button>
+          <button type="button" class="btn-reset-item" onclick="resetAudienceScore()">
+            🔄 Reset tỉ số khán giả
+          </button>
+        </div>
+
+        <!-- Thống kê phiếu (6 ô) -->
+        <div class="judge-stats-grid" style="margin-top: 2px;">
+          <div class="stat-pill">
+            <span class="stat-label">Tổng Vote</span>
+            <span class="stat-value" id="statTotalVoted">0/101</span>
+          </div>
+          <div class="stat-pill" style="border-color: #22c55e;">
+            <span class="stat-label" style="color: #4ade80;">Chọn</span>
+            <span class="stat-value" id="statChon" style="color: #4ade80;">0</span>
+          </div>
+          <div class="stat-pill" style="border-color: #ef4444;">
+            <span class="stat-label" style="color: #f87171;">Không</span>
+            <span class="stat-value" id="statKhongChon" style="color: #f87171;">0</span>
+          </div>
+          <div class="stat-pill" style="border-color: #ec4899;">
+            <span class="stat-label" style="color: #f472b6;">Hồng</span>
+            <span class="stat-value" id="statHong" style="color: #f472b6;">0</span>
+          </div>
+          <div class="stat-pill" style="border-color: #3b82f6;">
+            <span class="stat-label" style="color: #60a5fa;">Xanh</span>
+            <span class="stat-value" id="statXanh" style="color: #60a5fa;">0</span>
+          </div>
+          <div class="stat-pill" style="border-color: #a855f7;">
+            <span class="stat-label" style="color: #c084fc;">Khán giả</span>
+            <span class="stat-value" id="statAudience" style="color: #c084fc; font-size: 11px;">0-0</span>
+          </div>
+        </div>
       </div>
 
-      <div class="action-btn-grid">
-        <button class="btn-action btn-show-ref" onclick="showReferenceScore()">
-          🔀 Hiện tỉ số tham khảo<br><small style="font-size: 11px; opacity: 0.9;">Đổi chỗ 2 số mỗi 1 giây</small>
+      <!-- Mục 4: Hiện sự bình chọn của giám khảo bất kỳ -->
+      <div class="section-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="section-title" style="color: #38bdf8;">🎯 3. Hiện Sự Bình Chọn Của Giám Khảo Bất Kỳ</span>
+          <span style="font-size: 10px; color: #94a3b8;" id="specificCountHint">Nhập số lượng ô (1 - 101)</span>
+        </div>
+
+        <div class="specific-box">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; color: #cbd5e1;">Số ô cần mở:</span>
+              <input type="number" id="specificCountInput" min="1" max="101" placeholder="VD: 3" style="width: 70px; background: #172049; border: 1px solid #38bdf8; border-radius: 6px; padding: 4px 6px; color: #ffd269; font-size: 12px; text-align: center; outline: none;" oninput="onSpecificCountChange()" />
+            </div>
+            <button type="button" class="btn-confirm-specific" onclick="confirmSpecificJudges()">
+              ✅ XÁC NHẬN HIỆN TRÊN INDEX
+            </button>
+          </div>
+          <div id="specificInputsContainer" class="specific-inputs-grid" style="display: none;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CỘT PHẢI: 4 Hiệu ứng ánh sáng & Màn hình trực tiếp & Dừng -->
+    <div class="right-col">
+      
+      <!-- 4 Hiệu ứng ánh sáng (Grid 2x2) -->
+      <div class="section-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="section-title" style="color: #fbbf24;">⚡ 4 Hiệu Ứng Ánh Sáng Sân Khấu</span>
+          <span style="font-size: 10px; color: #94a3b8;">Phím tắt [1], [2], [3], [4]</span>
+        </div>
+
+        <div class="effects-grid">
+          <!-- Hiệu ứng 1 -->
+          <div class="effect-card" id="cardE1">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="effect-badge badge-e1">[1] Opening</span>
+              <span style="font-size: 10px; color: #fbbf24;">26s</span>
+            </div>
+            <p style="font-size: 9.5px; color: #94a3b8; line-height: 1.1;">Sóng chéo 2 bên -> Bật 101 ô trắng</p>
+            <button class="btn-trigger btn-e1" onclick="triggerEffect(1)">▶ KÍCH HOẠT E1</button>
+          </div>
+
+          <!-- Hiệu ứng 2 -->
+          <div class="effect-card" id="cardE2">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="effect-badge badge-e2">[2] Contestant</span>
+              <span style="font-size: 10px; color: #c084fc;">40s</span>
+            </div>
+            <p style="font-size: 9.5px; color: #94a3b8; line-height: 1.1;">Sóng chéo 2 bên -> Bật 101 ô trắng</p>
+            <button class="btn-trigger btn-e2" onclick="triggerEffect(2)">▶ KÍCH HOẠT E2</button>
+          </div>
+
+          <!-- Hiệu ứng 3 -->
+          <div class="effect-card" id="cardE3">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="effect-badge badge-e3">[3] Judge Vote</span>
+              <span style="font-size: 10px; color: #60a5fa;">13s (Lặp 1s)</span>
+            </div>
+            <p style="font-size: 9.5px; color: #94a3b8; line-height: 1.1;">2 hàng ô quét xuống -> 101 ô trắng</p>
+            <button class="btn-trigger btn-e3" onclick="triggerEffect(3)">▶ KÍCH HOẠT E3</button>
+          </div>
+
+          <!-- Hiệu ứng 4 -->
+          <div class="effect-card" id="cardE4">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="effect-badge badge-e4">[4] Result</span>
+              <span style="font-size: 10px; color: #f87171;">7s (Lặp 1s)</span>
+            </div>
+            <p style="font-size: 9.5px; color: #94a3b8; line-height: 1.1;">Quét nhanh 7 vòng -> 101 ô trắng</p>
+            <button class="btn-trigger btn-e4" onclick="triggerEffect(4)">▶ KÍCH HOẠT E4</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh nút phụ & Dừng khẩn cấp -->
+      <div class="controls-bar">
+        <button class="btn-stop-all" onclick="stopEffect()">
+          ⏹ DỪNG KHẨN CẤP [Space / Esc]
         </button>
-
-        <button class="btn-action btn-input-audience" onclick="openAudienceModal()">
-          ✏️ Nhập tỉ số khán giả<br><small style="font-size: 11px; opacity: 0.9;">Mở hộp thoại nhập số</small>
-        </button>
-
-        <button class="btn-action btn-show-audience" onclick="showAudienceScore()">
-          👥 Hiện tỉ số khán giả<br><small style="font-size: 11px; opacity: 0.9;">Hiện tỉ số đã lưu lên Sân khấu</small>
-        </button>
-      </div>
-    </div>
-
-    <!-- Hàng nút 3: Các Nút Reset Điểm & Tỉ Số -->
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 1px dashed #2f3c77;">
-      <span style="font-size: 12px; color: #f97316;">3. CÁC NÚT RESET ĐIỂM & TỈ SỐ SÂN KHẤU:</span>
-      <div class="reset-btn-grid">
-        <button type="button" class="btn-reset-item" onclick="resetStageScore()">
-          🔄 Reset điểm (Thường)
-        </button>
-        <button type="button" class="btn-reset-item" onclick="resetReferenceScore()">
-          🔄 Reset tỉ số (Tham khảo)
-        </button>
-        <button type="button" class="btn-reset-item" onclick="resetAudienceScore()">
-          🔄 Reset tỉ số khán giả
-        </button>
-      </div>
-    </div>
-
-    <!-- Thống kê phiếu bình chọn trực tiếp -->
-    <div style="margin-top: 8px;">
-      <span style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 8px;">📊 THỐNG KÊ PHIẾU BÌNH CHỌN HIỆN TẠI (1 - 101):</span>
-      <div class="judge-stats-grid">
-        <div class="stat-pill">
-          <span class="stat-label">Tổng đã vote</span>
-          <span class="stat-value" id="statTotalVoted">0 / 101</span>
-        </div>
-        <div class="stat-pill" style="border-color: #22c55e;">
-          <span class="stat-label" style="color: #4ade80;">Chọn (Xanh lá)</span>
-          <span class="stat-value" id="statChon" style="color: #4ade80;">0</span>
-        </div>
-        <div class="stat-pill" style="border-color: #ef4444;">
-          <span class="stat-label" style="color: #f87171;">Không chọn (Đỏ)</span>
-          <span class="stat-value" id="statKhongChon" style="color: #f87171;">0</span>
-        </div>
-        <div class="stat-pill" style="border-color: #ec4899;">
-          <span class="stat-label" style="color: #f472b6;">Màu hồng (Pink)</span>
-          <span class="stat-value" id="statHong" style="color: #f472b6;">0</span>
-        </div>
-        <div class="stat-pill" style="border-color: #3b82f6;">
-          <span class="stat-label" style="color: #60a5fa;">Màu xanh (Blue)</span>
-          <span class="stat-value" id="statXanh" style="color: #60a5fa;">0</span>
-        </div>
-        <div class="stat-pill" style="border-color: #a855f7;">
-          <span class="stat-label" style="color: #c084fc;">Tỉ số khán giả</span>
-          <span class="stat-value" id="statAudience" style="color: #c084fc; font-size: 17px;">0 - 0</span>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <button class="btn-aux" onclick="resetSeats('white')">⚪ Bật Trắng</button>
+          <button class="btn-aux" onclick="resetSeats('black')">⚫ Tắt Đen</button>
+          <button class="btn-aux" onclick="clearStageDisplay()">🧹 Xóa Điểm</button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- MỤC HIỆN SỰ BÌNH CHỌN CỦA GIÁM KHẢO BẤT KỲ -->
-  <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">🎯 HIỆN SỰ BÌNH CHỌN CỦA GIÁM KHẢO BẤT KỲ</span>
-      <span style="font-size: 12px; color: #94a3b8;">Chọn số lượng và vị trí các giám khảo cần công bố kết quả lên màn hình index.html</span>
-    </div>
-
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; background: #090e29; border: 1.5px solid #28336d; padding: 14px 18px; border-radius: 12px;">
-      <label style="color: #cbd5e1; font-size: 14px;">Nhập số ô cần mở (1 - 101):</label>
-      <input type="number" id="specificCountInput" min="1" max="101" placeholder="Nhập số ô (VD: 3)" style="width: 140px; background: #182252; border: 1.5px solid #38bdf8; border-radius: 8px; padding: 8px 12px; color: #ffd269; font-size: 16px; text-align: center; outline: none;" oninput="onSpecificCountChange()" />
-      <span style="font-size: 12px; color: #94a3b8;" id="specificCountHint">Nhập số để tự động sinh các ô nhập vị trí bên dưới.</span>
-    </div>
-
-    <!-- Khung chứa các textbox vị trí con tự động sinh ra -->
-    <div id="specificInputsContainer" class="specific-inputs-grid" style="display: none;"></div>
-
-    <div>
-      <button type="button" class="btn-confirm-specific" onclick="confirmSpecificJudges()">
-        ✅ XÁC NHẬN HIỂN THỊ TRÊN INDEX
-      </button>
-    </div>
-  </div>
-
-  <!-- 4 HIỆU ỨNG ÁNH SÁNG SÂN KHẤU -->
-  <div class="effects-grid">
-    <!-- Hiệu ứng 1 -->
-    <div class="effect-card" id="cardE1">
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span class="effect-badge badge-e1">Phím [1]</span>
-          <span style="font-size: 12px; color: #fbbf24;">26 giây</span>
+      <!-- Khung Giám Sát Sân Khấu Trực Tiếp (Live Iframe) -->
+      <div class="preview-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 11px; color: #94a3b8;">📺 Màn hình Giám sát Sân khấu Trực tiếp (index.html)</span>
+          <span style="font-size: 9.5px; color: #64748b;">🔇 Mute trong Controller</span>
         </div>
-        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 1 (Opening)</h3>
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Sóng chéo lan tỏa từ tâm -> Giây 26 bật 101 ô trắng (Opening.mp3)</p>
-      </div>
-      <button class="btn-trigger btn-e1" onclick="triggerEffect(1)">
-        ▶ KÍCH HOẠT HIỆU ỨNG 1
-      </button>
-    </div>
-
-    <!-- Hiệu ứng 2 -->
-    <div class="effect-card" id="cardE2">
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span class="effect-badge badge-e2">Phím [2]</span>
-          <span style="font-size: 12px; color: #c084fc;">40 giây</span>
+        <div class="preview-iframe-wrapper">
+          <iframe src="/index.html?mode=preview&mute=1" id="stageIframe"></iframe>
         </div>
-        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 2 (Contestant)</h3>
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Sóng chéo lan tỏa từ tâm -> Giây 40 bật 101 ô trắng (Contestant.mp3)</p>
       </div>
-      <button class="btn-trigger btn-e2" onclick="triggerEffect(2)">
-        ▶ KÍCH HOẠT HIỆU ỨNG 2
-      </button>
+
     </div>
 
-    <!-- Hiệu ứng 3 -->
-    <div class="effect-card" id="cardE3">
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span class="effect-badge badge-e3">Phím [3]</span>
-          <span style="font-size: 12px; color: #60a5fa;">13s (Lặp 1s)</span>
-        </div>
-        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 3 (Judge Vote)</h3>
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">2 hàng ô liền kề quét xuống -> 13 vòng lặp (1s/vòng) -> 101 ô trắng (Judge_Vote.mp3)</p>
-      </div>
-      <button class="btn-trigger btn-e3" onclick="triggerEffect(3)">
-        ▶ KÍCH HOẠT HIỆU ỨNG 3
-      </button>
-    </div>
-
-    <!-- Hiệu ứng 4 -->
-    <div class="effect-card" id="cardE4">
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span class="effect-badge badge-e4">Phím [4]</span>
-          <span style="font-size: 12px; color: #f87171;">7s (Lặp 1s)</span>
-        </div>
-        <h3 style="font-size: 18px; color: #ffffff;">Hiệu ứng 4 (Result)</h3>
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;">2 hàng ô liền kề quét nhanh -> 7 vòng lặp (1s/vòng) -> 101 ô trắng (Result.mp3)</p>
-      </div>
-      <button class="btn-trigger btn-e4" onclick="triggerEffect(4)">
-        ▶ KÍCH HOẠT HIỆU ỨNG 4
-      </button>
-    </div>
-  </div>
-
-  <!-- Thanh Nút Phụ & Dừng Khẩn Cấp -->
-  <div class="controls-bar">
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <button class="btn-stop-all" onclick="stopEffect()">
-        ⏹ DỪNG KHẨN CẤP [Space / Esc]
-      </button>
-      <button class="btn-aux" onclick="resetSeats('white')">
-        ⚪ Bật Trắng 101 Ô
-      </button>
-      <button class="btn-aux" onclick="resetSeats('black')">
-        ⚫ Tắt Đen 101 Ô
-      </button>
-      <button class="btn-aux" onclick="clearStageDisplay()">
-        🧹 Xóa Hiển Thị Điểm / Tỉ Số
-      </button>
-    </div>
-
-    <div style="font-size: 13px; color: #94a3b8;">
-      🔇 Controller luôn tắt âm thanh (Âm thanh chỉ phát trên Sân khấu index.html)
-    </div>
-  </div>
-
-  <!-- Khung Xem Trực Tiếp Sân Khấu (Live Iframe Preview) -->
-  <div class="preview-section">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span>📺 Màn Hình Giám Sát Sân Khấu Trực Tiếp (index.html)</span>
-      <span style="font-size: 12px; color: #94a3b8;">Đồng bộ 1:1 thời gian thực</span>
-    </div>
-    <div class="preview-iframe-wrapper">
-      <iframe src="/index.html?mode=preview&mute=1" id="stageIframe"></iframe>
-    </div>
   </div>
 
   <!-- MODAL POPUP NHẬP TỈ SỐ KHÁN GIẢ -->
   <div class="modal-overlay" id="audienceModal">
     <div class="modal-card">
       <h2 class="modal-title">✏️ NHẬP TỈ SỐ KHÁN GIẢ</h2>
-
       <div class="modal-inputs">
         <div class="modal-input-group">
           <label class="pink">💖 Màu hồng (Bên trái):</label>
           <input type="number" class="modal-input pink" id="inputPinkScore" value="0" min="0" />
         </div>
-
         <div class="modal-input-group">
           <label class="blue">🔷 Màu xanh (Bên phải):</label>
           <input type="number" class="modal-input blue" id="inputBlueScore" value="0" min="0" />
         </div>
       </div>
-
       <div class="modal-actions">
-        <button type="button" class="btn-modal-save" onclick="saveAudienceScore()">
-          💾 LƯU TỈ SỐ
-        </button>
-        <button type="button" class="btn-modal-close" onclick="closeAudienceModal()">
-          ❌ ĐÓNG
-        </button>
+        <button type="button" class="btn-modal-save" onclick="saveAudienceScore()">💾 LƯU TỈ SỐ</button>
+        <button type="button" class="btn-modal-close" onclick="closeAudienceModal()">❌ ĐÓNG</button>
       </div>
     </div>
   </div>
@@ -1043,6 +869,7 @@
     const connectionText = document.getElementById("connectionText");
     const displayRoomCode = document.getElementById("displayRoomCode");
     const votingStatusPill = document.getElementById("votingStatusPill");
+    const stageIframe = document.getElementById("stageIframe");
 
     const statTotalVoted = document.getElementById("statTotalVoted");
     const statChon = document.getElementById("statChon");
@@ -1061,12 +888,17 @@
     const specificInputsContainer = document.getElementById("specificInputsContainer");
     const specificCountHint = document.getElementById("specificCountHint");
 
-    let currentRoomCode = "101101";
+    // Lấy roomCode từ URL nếu có hoặc mặc định 101101
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentRoomCode = (urlParams.get("roomid") || urlParams.get("roomId") || "101101").toString().trim();
+    displayRoomCode.textContent = currentRoomCode;
+
     let currentVotingMode = "LOCKED";
     let votesMap = {};
     let savedAudienceScore = { pink: 0, blue: 0 };
 
     let ws = null;
+    let bc = null;
     let clockSyncTimer = null;
     let fallbackPollTimer = null;
     let serverTimeOffset = 0;
@@ -1077,7 +909,39 @@
       return Date.now() + serverTimeOffset;
     }
 
-    // Hàm random ngẫu nhiên vị trí các đèn xanh (CHON) cho chế độ nhập chay điểm
+    function updateIframeSrc() {
+      if (stageIframe) {
+        stageIframe.src = `/index.html?roomid=${encodeURIComponent(currentRoomCode)}&mode=preview&mute=1`;
+      }
+    }
+
+    function initBroadcastChannel() {
+      if (bc) bc.close();
+      bc = new BroadcastChannel(`stage101_channel_${currentRoomCode}`);
+      bc.onmessage = (e) => {
+        const data = e.data;
+        if (!data) return;
+        if (data.type === "RESET_SCORE") {
+          if (inputNormalScore) inputNormalScore.value = "";
+          Object.keys(votesMap).forEach(k => {
+            if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") delete votesMap[k];
+          });
+          updateVoteStatistics(votesMap);
+        } else if (data.type === "RESET_REFERENCE_SCORE") {
+          if (inputVersusPink) inputVersusPink.value = "";
+          if (inputVersusBlue) inputVersusBlue.value = "";
+          Object.keys(votesMap).forEach(k => {
+            if (votesMap[k] === "HONG" || votesMap[k] === "XANH") delete votesMap[k];
+          });
+          updateVoteStatistics(votesMap);
+        } else if (data.type === "UPDATE_MANUAL_SCORES" || data.type === "MANUAL_SCORES_UPDATED") {
+          const ms = data.manualScores || data;
+          applyManualScoresFromServer(ms);
+        }
+      };
+    }
+
+    // Random vị trí đèn xanh (CHON) cho nhập chay điểm
     function generateRandomNormalVotes(score) {
       const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
       for (let i = allSeats.length - 1; i > 0; i--) {
@@ -1092,7 +956,7 @@
       return votes;
     }
 
-    // Hàm random ngẫu nhiên vị trí các ô Hồng và Xanh cho chế độ nhập chay tỉ số đối đầu
+    // Random vị trí ô Hồng và Xanh cho nhập chay tỉ số đối đầu
     function generateRandomVersusVotes(pinkCount, blueCount) {
       const allSeats = Array.from({ length: 101 }, (_, i) => i + 1);
       for (let i = allSeats.length - 1; i > 0; i--) {
@@ -1114,17 +978,17 @@
     function syncServerClock(wsInstance) {
       if (wsInstance && wsInstance.readyState === WebSocket.OPEN) {
         const pingTime = Date.now();
-        wsInstance.send(JSON.stringify({ type: "TIME_SYNC", clientPingTime: pingTime }));
+        wsInstance.send(JSON.stringify({ type: "TIME_SYNC", clientPingTime: pingTime, roomId: currentRoomCode }));
       }
     }
 
     function updateConnectionBadge(connected = true) {
       if (connected) {
         statusDot.className = "status-dot";
-        connectionText.textContent = `Online (${onlineClientsCount} thiết bị) | Ping: ${lastPingLatency}ms`;
+        connectionText.textContent = `Online (${onlineClientsCount}) | ${lastPingLatency}ms`;
       } else {
         statusDot.className = "status-dot disconnected";
-        connectionText.textContent = "Mất kết nối server (Đang thử lại)";
+        connectionText.textContent = "Offline (Thử lại...)";
       }
     }
 
@@ -1132,10 +996,10 @@
       currentVotingMode = mode;
       if (mode === "NORMAL") {
         votingStatusPill.className = "voting-status-pill normal";
-        votingStatusPill.textContent = "🟢 BÌNH CHỌN THƯỜNG (CHỌN / KHÔNG CHỌN)";
+        votingStatusPill.textContent = "🟢 THƯỜNG";
       } else if (mode === "VERSUS") {
         votingStatusPill.className = "voting-status-pill versus";
-        votingStatusPill.textContent = "⚡ BÌNH CHỌN ĐỐI ĐẦU (HỒNG / XANH)";
+        votingStatusPill.textContent = "⚡ ĐỐI ĐẦU";
       } else {
         votingStatusPill.className = "voting-status-pill locked";
         votingStatusPill.textContent = "🔒 ĐANG KHÓA";
@@ -1157,23 +1021,27 @@
       });
 
       const total = countChon + countKhongChon + countHong + countXanh;
-      statTotalVoted.textContent = `${total} / 101`;
+      statTotalVoted.textContent = `${total}/101`;
       statChon.textContent = countChon;
       statKhongChon.textContent = countKhongChon;
       statHong.textContent = countHong;
       statXanh.textContent = countXanh;
-      statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+      statAudience.textContent = `${savedAudienceScore.pink}-${savedAudienceScore.blue}`;
     }
 
-    // 1. WebSocket kết nối Server NodeJS
+    // 1. WebSocket kết nối Server NodeJS với tham số ?roomid=
     function initWebSocket() {
+      if (ws) {
+        try { ws.close(); } catch(e){}
+      }
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${location.host}/ws`;
+      const wsUrl = `${protocol}//${location.host}/ws?roomid=${encodeURIComponent(currentRoomCode)}`;
 
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         updateConnectionBadge(true);
+        ws.send(JSON.stringify({ type: "JOIN_ROOM", roomId: currentRoomCode }));
         syncServerClock(ws);
 
         if (clockSyncTimer) clearInterval(clockSyncTimer);
@@ -1216,7 +1084,7 @@
               savedAudienceScore = msg.state.audienceScore;
               inputPinkScore.value = savedAudienceScore.pink;
               inputBlueScore.value = savedAudienceScore.blue;
-              statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+              statAudience.textContent = `${savedAudienceScore.pink}-${savedAudienceScore.blue}`;
             }
             if (msg.state.manualScores) {
               applyManualScoresFromServer(msg.state.manualScores);
@@ -1239,7 +1107,7 @@
             applyManualScoresFromServer(msg.manualScores);
           } else if (msg.type === "AUDIENCE_SCORE_UPDATED" && msg.audienceScore) {
             savedAudienceScore = msg.audienceScore;
-            statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+            statAudience.textContent = `${savedAudienceScore.pink}-${savedAudienceScore.blue}`;
           } else if (msg.type === "RESET_SCORE") {
             if (msg.voting && msg.voting.votes) {
               updateVoteStatistics(msg.voting.votes);
@@ -1301,29 +1169,27 @@
 
       const payload = {
         type: "UPDATE_MANUAL_SCORES",
+        roomId: currentRoomCode,
         normal,
         versusPink,
         versusBlue,
       };
 
-      // Đẩy tức thì qua WebSocket và BroadcastChannel
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
       }
-      bc.postMessage(payload);
+      if (bc) bc.postMessage(payload);
 
-      // Debounce lưu vào REST API
       if (manualScoreDebounce) clearTimeout(manualScoreDebounce);
       manualScoreDebounce = setTimeout(() => {
         fetch("/api/scores/manual", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ normal, versusPink, versusBlue })
+          body: JSON.stringify({ roomId: currentRoomCode, normal, versusPink, versusBlue })
         }).catch(() => {});
       }, 250);
     }
 
-    // Gắn sự kiện tự động đẩy lên hệ thống ngay sau khi nhập
     if (inputNormalScore) {
       inputNormalScore.addEventListener("input", autoSyncManualScores);
       inputNormalScore.addEventListener("change", autoSyncManualScores);
@@ -1339,7 +1205,7 @@
 
     async function pollServerState() {
       try {
-        const res = await fetch("/api/state");
+        const res = await fetch(`/api/state?roomid=${encodeURIComponent(currentRoomCode)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.serverTime) {
@@ -1359,7 +1225,7 @@
             }
             if (data.state.audienceScore) {
               savedAudienceScore = data.state.audienceScore;
-              statAudience.textContent = `${savedAudienceScore.pink} - ${savedAudienceScore.blue}`;
+              statAudience.textContent = `${savedAudienceScore.pink}-${savedAudienceScore.blue}`;
             }
             if (data.state.manualScores) {
               applyManualScoresFromServer(data.state.manualScores);
@@ -1369,42 +1235,18 @@
       } catch (e) {}
     }
 
-    initWebSocket();
-
-    // BroadcastChannel cục bộ
-    const bc = new BroadcastChannel("stage101_channel");
-    bc.onmessage = (e) => {
-      const data = e.data;
-      if (!data) return;
-      if (data.type === "RESET_SCORE") {
-        if (inputNormalScore) inputNormalScore.value = "";
-        Object.keys(votesMap).forEach(k => {
-          if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") delete votesMap[k];
-        });
-        updateVoteStatistics(votesMap);
-      } else if (data.type === "RESET_REFERENCE_SCORE") {
-        if (inputVersusPink) inputVersusPink.value = "";
-        if (inputVersusBlue) inputVersusBlue.value = "";
-        Object.keys(votesMap).forEach(k => {
-          if (votesMap[k] === "HONG" || votesMap[k] === "XANH") delete votesMap[k];
-        });
-        updateVoteStatistics(votesMap);
-      } else if (data.type === "UPDATE_MANUAL_SCORES" || data.type === "MANUAL_SCORES_UPDATED") {
-        const ms = data.manualScores || data;
-        applyManualScoresFromServer(ms);
-      }
-    };
-
     // Quản lý Mã Phòng
     function createNewRoom() {
       if (!confirm("Tạo mã phòng mới? (Các Giám Khảo sẽ cần nhập mã mới để vào bình chọn)")) return;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "CREATE_ROOM" }));
-      }
       fetch("/api/room/create", { method: "POST" }).then(res => res.json()).then(data => {
         if (data.roomCode) {
           currentRoomCode = data.roomCode;
           displayRoomCode.textContent = currentRoomCode;
+          const newUrl = `${window.location.pathname}?roomid=${currentRoomCode}`;
+          window.history.replaceState({}, "", newUrl);
+          updateIframeSrc();
+          initBroadcastChannel();
+          initWebSocket();
         }
       }).catch(() => {});
     }
@@ -1422,12 +1264,12 @@
     function setVotingMode(mode) {
       updateVotingModeBadge(mode);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SET_VOTING_MODE", mode }));
+        ws.send(JSON.stringify({ type: "SET_VOTING_MODE", mode, roomId: currentRoomCode }));
       }
       fetch("/api/voting/mode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode })
+        body: JSON.stringify({ mode, roomId: currentRoomCode })
       }).catch(() => {});
     }
 
@@ -1436,6 +1278,7 @@
       const normalVal = inputNormalScore ? inputNormalScore.value.trim() : "";
       const payload = {
         type: "SHOW_NORMAL_RESULT",
+        roomId: currentRoomCode,
       };
 
       if (normalVal !== "") {
@@ -1449,7 +1292,7 @@
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
       }
-      bc.postMessage(payload);
+      if (bc) bc.postMessage(payload);
       fetch("/api/display/normal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1462,6 +1305,7 @@
       const blueVal = inputVersusBlue ? inputVersusBlue.value.trim() : "";
       const payload = {
         type: "SHOW_VERSUS_RESULT",
+        roomId: currentRoomCode,
       };
 
       let isManual = false;
@@ -1480,7 +1324,6 @@
       }
 
       if (isManual) {
-        // Tự động random vị trí ô xanh và ô hồng sao cho số lượng ứng với số đã nhập
         payload.votes = generateRandomVersusVotes(pScore, bScore);
       } else {
         payload.votes = votesMap;
@@ -1489,7 +1332,7 @@
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
       }
-      bc.postMessage(payload);
+      if (bc) bc.postMessage(payload);
       fetch("/api/display/versus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1498,24 +1341,63 @@
     }
 
     function showReferenceScore() {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SHOW_REFERENCE_SCORE" }));
+      const pinkVal = inputVersusPink ? inputVersusPink.value.trim() : "";
+      const blueVal = inputVersusBlue ? inputVersusBlue.value.trim() : "";
+
+      let pinkCount = 0;
+      let blueCount = 0;
+
+      if (pinkVal !== "") {
+        pinkCount = Number(pinkVal) || 0;
+      } else {
+        Object.values(votesMap).forEach(v => {
+          if (v === "HONG") pinkCount++;
+        });
       }
-      bc.postMessage({ type: "SHOW_REFERENCE_SCORE" });
-      fetch("/api/display/reference", { method: "POST" }).catch(() => {});
+
+      if (blueVal !== "") {
+        blueCount = Number(blueVal) || 0;
+      } else {
+        Object.values(votesMap).forEach(v => {
+          if (v === "XANH") blueCount++;
+        });
+      }
+
+      const payload = {
+        type: "SHOW_REFERENCE_SCORE",
+        roomId: currentRoomCode,
+        scoreA: pinkCount,
+        scoreB: blueCount,
+        pink: pinkCount,
+        blue: blueCount,
+      };
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/reference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function showAudienceScore() {
+      const payload = { type: "SHOW_AUDIENCE_SCORE", roomId: currentRoomCode };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SHOW_AUDIENCE_SCORE" }));
+        ws.send(JSON.stringify(payload));
       }
-      bc.postMessage({ type: "SHOW_AUDIENCE_SCORE" });
-      fetch("/api/display/audience", { method: "POST" }).catch(() => {});
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/audience", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     // Các hàm Reset Điểm & Tỉ Số
     function resetStageScore() {
-      // Khi bấm reset điểm, số chọn và số không chọn trở về 0
       if (inputNormalScore) inputNormalScore.value = "";
       Object.keys(votesMap).forEach(k => {
         if (votesMap[k] === "CHON" || votesMap[k] === "KHONG_CHON") {
@@ -1524,15 +1406,19 @@
       });
       updateVoteStatistics(votesMap);
 
+      const payload = { type: "RESET_SCORE", roomId: currentRoomCode };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "RESET_SCORE" }));
+        ws.send(JSON.stringify(payload));
       }
-      bc.postMessage({ type: "RESET_SCORE" });
-      fetch("/api/display/reset-score", { method: "POST" }).catch(() => {});
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/reset-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function resetReferenceScore() {
-      // Khi bấm reset tỉ số, số phiếu xanh và hồng trở về 0
       if (inputVersusPink) inputVersusPink.value = "";
       if (inputVersusBlue) inputVersusBlue.value = "";
       Object.keys(votesMap).forEach(k => {
@@ -1542,31 +1428,46 @@
       });
       updateVoteStatistics(votesMap);
 
+      const payload = { type: "RESET_REFERENCE_SCORE", roomId: currentRoomCode };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "RESET_REFERENCE_SCORE" }));
+        ws.send(JSON.stringify(payload));
       }
-      bc.postMessage({ type: "RESET_REFERENCE_SCORE" });
-      fetch("/api/display/reset-ref-score", { method: "POST" }).catch(() => {});
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/reset-ref-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function resetAudienceScore() {
       savedAudienceScore = { pink: 0, blue: 0 };
-      statAudience.textContent = "0 - 0";
+      statAudience.textContent = "0-0";
       inputPinkScore.value = 0;
       inputBlueScore.value = 0;
+      const payload = { type: "RESET_AUDIENCE_SCORE", roomId: currentRoomCode };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "RESET_AUDIENCE_SCORE" }));
+        ws.send(JSON.stringify(payload));
       }
-      bc.postMessage({ type: "RESET_AUDIENCE_SCORE" });
-      fetch("/api/display/reset-audience-score", { method: "POST" }).catch(() => {});
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/reset-audience-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function clearStageDisplay() {
+      const payload = { type: "CLEAR_STAGE_DISPLAY", roomId: currentRoomCode };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "CLEAR_STAGE_DISPLAY" }));
+        ws.send(JSON.stringify(payload));
       }
-      bc.postMessage({ type: "CLEAR_STAGE_DISPLAY" });
-      fetch("/api/display/clear", { method: "POST" }).catch(() => {});
+      if (bc) bc.postMessage(payload);
+      fetch("/api/display/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     // Xử lý mục: Hiện sự bình chọn của giám khảo bất kỳ
@@ -1575,15 +1476,14 @@
       if (isNaN(rawVal) || rawVal <= 0) {
         specificInputsContainer.innerHTML = "";
         specificInputsContainer.style.display = "none";
-        specificCountHint.textContent = "Nhập số để tự động sinh các ô nhập vị trí bên dưới.";
+        specificCountHint.textContent = "Nhập số lượng ô (1 - 101)";
         return;
       }
 
       const count = Math.min(Math.max(rawVal, 1), 101);
       specificCountInput.value = count;
-      specificCountHint.textContent = `Đang tạo ${count} ô nhập vị trí (1 - 101). Hãy điền vị trí từng ghế cần mở:`;
+      specificCountHint.textContent = `Đang mở ${count} ô (1-101):`;
 
-      // Giữ lại các giá trị đã nhập trước đó nếu có
       const existingValues = [];
       const currentInputs = specificInputsContainer.querySelectorAll(".specific-seat-val");
       currentInputs.forEach(inp => {
@@ -1598,14 +1498,14 @@
         item.className = "specific-seat-item";
 
         const lbl = document.createElement("label");
-        lbl.textContent = `Ô thứ ${i + 1}:`;
+        lbl.textContent = `Ô ${i + 1}:`;
 
         const inp = document.createElement("input");
         inp.type = "number";
         inp.className = "specific-seat-val";
         inp.min = 1;
         inp.max = 101;
-        inp.placeholder = `Ghế ${i + 1}`;
+        inp.placeholder = `${i + 1}`;
         if (existingValues[i]) {
           inp.value = existingValues[i];
         }
@@ -1636,6 +1536,7 @@
 
       const payload = {
         type: "SHOW_SPECIFIC_JUDGES",
+        roomId: currentRoomCode,
         judgeIds,
         votes: votesMap
       };
@@ -1643,14 +1544,14 @@
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
       }
-      bc.postMessage(payload);
+      if (bc) bc.postMessage(payload);
       fetch("/api/display/specific-judges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).catch(() => {});
 
-      alert(`Đã gửi lệnh hiển thị bình chọn của ${judgeIds.length} giám khảo (Vị trí: ${judgeIds.join(", ")}) lên màn hình Sân khấu index.html!`);
+      alert(`Đã gửi lệnh hiển thị bình chọn của ${judgeIds.length} giám khảo (Vị trí: ${judgeIds.join(", ")}) lên màn hình Sân khấu!`);
     }
 
     // Modal Nhập Tỉ Số Khán Giả
@@ -1668,15 +1569,16 @@
       const pink = Number(inputPinkScore.value) || 0;
       const blue = Number(inputBlueScore.value) || 0;
       savedAudienceScore = { pink, blue };
-      statAudience.textContent = `${pink} - ${blue}`;
+      statAudience.textContent = `${pink}-${blue}`;
 
+      const payload = { type: "SET_AUDIENCE_SCORE", roomId: currentRoomCode, pink, blue };
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SET_AUDIENCE_SCORE", pink, blue }));
+        ws.send(JSON.stringify(payload));
       }
       fetch("/api/audience/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pink, blue })
+        body: JSON.stringify(payload)
       }).catch(() => {});
 
       closeAudienceModal();
@@ -1684,40 +1586,47 @@
 
     // Kích hoạt 4 Hiệu ứng ánh sáng sân khấu
     function triggerEffect(effectNum) {
-      console.log(`[Controller] Kích hoạt Hiệu ứng ${effectNum}`);
-      bc.postMessage({ type: "TRIGGER_EFFECT", effect: effectNum });
+      console.log(`[Controller] Kích hoạt Hiệu ứng ${effectNum} cho phòng ${currentRoomCode}`);
+      const payload = { type: "TRIGGER_EFFECT", roomId: currentRoomCode, effect: effectNum };
+      if (bc) bc.postMessage(payload);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "TRIGGER_EFFECT", effect: effectNum }));
+        ws.send(JSON.stringify(payload));
       }
       fetch("/api/trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ effect: effectNum })
+        body: JSON.stringify(payload)
       }).catch(() => {});
     }
 
     function stopEffect() {
-      bc.postMessage({ type: "STOP_EFFECT" });
+      const payload = { type: "STOP_EFFECT", roomId: currentRoomCode };
+      if (bc) bc.postMessage(payload);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "STOP_EFFECT" }));
+        ws.send(JSON.stringify(payload));
       }
-      fetch("/api/stop", { method: "POST" }).catch(() => {});
+      fetch("/api/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
 
     function resetSeats(mode) {
-      bc.postMessage({ type: "RESET", mode });
+      const payload = { type: "RESET", roomId: currentRoomCode, mode };
+      if (bc) bc.postMessage(payload);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "RESET", mode }));
+        ws.send(JSON.stringify(payload));
       }
       fetch("/api/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode })
+        body: JSON.stringify(payload)
       }).catch(() => {});
     }
 
     function openStageWindow() {
-      window.open("/index.html", "StageDisplay", "width=1280,height=720,menubar=no,toolbar=no");
+      window.open(`/index.html?roomid=${currentRoomCode}`, "StageDisplay", "width=1280,height=720,menubar=no,toolbar=no");
     }
 
     function openJudgeWindow() {
@@ -1736,6 +1645,10 @@
         stopEffect();
       }
     });
+
+    initBroadcastChannel();
+    initWebSocket();
+    updateIframeSrc();
   </script>
 </body>
 </html>

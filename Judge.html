@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Ban Giám Khảo - Hệ Thống Bình Chọn 101</title>
+  <title>TÔI LÀ NGƯỜI CHIẾN THẮNG - Giám khảo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
@@ -620,7 +620,7 @@
     // Kết nối WebSocket thời gian thực
     function connectWebSocket() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${location.host}/ws`;
+      const wsUrl = `${protocol}//${location.host}/ws?roomid=${encodeURIComponent(currentRoomId)}`;
 
       ws = new WebSocket(wsUrl);
 
@@ -628,6 +628,7 @@
         connDot.style.background = "#22c55e";
         connDot.style.boxShadow = "0 0 8px #22c55e";
         connText.textContent = "Online";
+        ws.send(JSON.stringify({ type: "JOIN_ROOM", roomId: currentRoomId }));
       };
 
       ws.onmessage = (event) => {
@@ -705,30 +706,34 @@
     }
 
     // BroadcastChannel cục bộ đồng bộ giữa các tab cùng trình duyệt
-    const bc = new BroadcastChannel("stage101_channel");
-    bc.onmessage = (e) => {
-      const data = e.data;
-      if (!data) return;
-      if (data.type === "RESET_SCORE") {
-        if (selectedVote === "CHON" || selectedVote === "KHONG_CHON" || !selectedVote) {
+    let bc = null;
+    function initJudgeBroadcastChannel() {
+      if (bc) bc.close();
+      bc = new BroadcastChannel(`stage101_channel_${currentRoomId}`);
+      bc.onmessage = (e) => {
+        const data = e.data;
+        if (!data) return;
+        if (data.type === "RESET_SCORE") {
+          if (selectedVote === "CHON" || selectedVote === "KHONG_CHON" || !selectedVote) {
+            hasVoted = false;
+            selectedVote = null;
+            updateVotingUI(currentVotingMode);
+            showToast("🔄 Điểm đã được reset - Lựa chọn đã được xóa!");
+          }
+        } else if (data.type === "RESET_REFERENCE_SCORE") {
+          if (selectedVote === "HONG" || selectedVote === "XANH" || !selectedVote) {
+            hasVoted = false;
+            selectedVote = null;
+            updateVotingUI(currentVotingMode);
+            showToast("🔄 Tỉ số đối đầu đã được reset - Lựa chọn đã được xóa!");
+          }
+        } else if (data.type === "RESET") {
           hasVoted = false;
           selectedVote = null;
           updateVotingUI(currentVotingMode);
-          showToast("🔄 Điểm đã được reset - Lựa chọn đã được xóa!");
         }
-      } else if (data.type === "RESET_REFERENCE_SCORE") {
-        if (selectedVote === "HONG" || selectedVote === "XANH" || !selectedVote) {
-          hasVoted = false;
-          selectedVote = null;
-          updateVotingUI(currentVotingMode);
-          showToast("🔄 Tỉ số đối đầu đã được reset - Lựa chọn đã được xóa!");
-        }
-      } else if (data.type === "RESET") {
-        hasVoted = false;
-        selectedVote = null;
-        updateVotingUI(currentVotingMode);
-      }
-    };
+      };
+    }
 
     // Đăng nhập vào phòng
     async function loginJudge(seatId, roomId) {
@@ -767,6 +772,7 @@
         judgeScreen.style.display = "flex";
 
         updateVotingUI(data.votingMode || "LOCKED");
+        initJudgeBroadcastChannel();
         connectWebSocket();
         return true;
       } catch (err) {

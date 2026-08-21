@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sân Khấu 101 Ô Khán Giả - Stage Display</title>
+  <title>TÔI LÀ NGƯỜI CHIẾN THẮNG - Viewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -33,14 +33,20 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* Scene tỷ lệ 16:9 chuẩn 1920x1080 */
+    /* Scene tỷ lệ 16:9 chuẩn 1920x1080 (Tự động scale khít mọi kích thước màn hình theo mặc định) */
     .scene-container {
       position: relative;
-      width: min(100vw, 177.7777778vh);
-      height: min(100vh, 56.25vw);
+      width: 1920px;
+      height: 1080px;
+      min-width: 1920px;
+      min-height: 1080px;
+      max-width: 1920px;
+      max-height: 1080px;
       overflow: hidden;
       background: radial-gradient(ellipse at 50% 43%, rgba(27, 31, 105, 0.72) 0%, rgba(7, 13, 59, 0.92) 46%, #02072a 100%);
       box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+      transform-origin: center center;
+      flex-shrink: 0;
     }
 
     /* Ánh sáng nền sân khấu */
@@ -253,43 +259,43 @@
       z-index: 12;
     }
 
-    /* Trạng thái Đối đầu: Màu hồng */
+    /* Trạng thái Đối đầu: Màu hồng như trong ảnh tham khảo */
     .seat.is-pink-lit {
-      background: linear-gradient(180deg, #ffffff 0%, #fbcfe8 35%, #ec4899 100%) !important;
-      border-color: #f472b6 !important;
+      background: linear-gradient(180deg, #ffffff 0%, #ff66cc 20%, #ff007f 60%, #c20060 100%) !important;
+      border-color: #ffa6e9 !important;
       box-shadow:
-        0 0 25px rgba(236, 72, 153, 1),
-        0 0 50px rgba(236, 72, 153, 0.8),
+        0 0 25px rgba(255, 0, 127, 1),
+        0 0 50px rgba(255, 0, 127, 0.85),
         inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
       transform: translate(-50%, -50%) scale(1.05);
       z-index: 12;
     }
 
-    /* Trạng thái Đối đầu: Màu xanh dương */
+    /* Trạng thái Đối đầu: Màu xanh như trong ảnh tham khảo */
     .seat.is-blue-lit {
-      background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 35%, #3b82f6 100%) !important;
-      border-color: #60a5fa !important;
+      background: linear-gradient(180deg, #ffffff 0%, #7dd3fc 20%, #00d2ff 60%, #0284c7 100%) !important;
+      border-color: #a5f3fc !important;
       box-shadow:
-        0 0 25px rgba(59, 130, 246, 1),
-        0 0 50px rgba(59, 130, 246, 0.8),
+        0 0 25px rgba(0, 210, 255, 1),
+        0 0 50px rgba(0, 210, 255, 0.85),
         inset 0 0 16px rgba(255, 255, 255, 0.95) !important;
       transform: translate(-50%, -50%) scale(1.05);
       z-index: 12;
     }
 
-    /* VỊ TRÍ TRUNG TÂM Ở HÀNG 2 HIỂN THỊ TỈ SỐ VÀ SỐ ĐIỂM */
-    /* Tọa độ tâm Hàng 2: x = 960px, y = 236px */
+    /* VỊ TRÍ TRUNG TÂM HIỂN THỊ TỈ SỐ VÀ SỐ ĐIỂM (Cao hơn hàng 1 một chút) */
+    /* Hàng 1 có y = 186px -> Điểm/Tỉ số đặt ở y = 168px */
     .center-stage-score {
       position: absolute;
       left: 960px;
-      top: 236px;
+      top: 168px;
       transform: translate(-50%, -50%);
       z-index: 25;
       pointer-events: none;
       display: none;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 20px;
       font-family: 'SFAlienEncountersSolid', 'Orbitron', 'Chakra Petch', monospace, sans-serif;
       text-shadow: 0 0 25px currentColor;
       user-select: none;
@@ -301,43 +307,37 @@
       100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
 
-    /* Số điểm (Hiện kết quả thường): Chữ màu xanh lá */
+    /* Số điểm (Hiện kết quả thường): Font to hơn, đặt cao hơn hàng đầu */
     .score-single-number {
-      font-size: 80px;
+      font-size: 118px;
       color: #22c55e;
-      text-shadow: 0 0 25px rgba(34, 197, 94, 0.95), 0 0 50px rgba(34, 197, 94, 0.7);
-      letter-spacing: 2px;
+      text-shadow: 0 0 25px rgba(34, 197, 94, 0.95), 0 0 55px rgba(34, 197, 94, 0.8), 0 0 90px rgba(34, 197, 94, 0.5);
+      letter-spacing: 4px;
       font-weight: 900;
     }
 
-    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Màu hồng bên trái, Màu xanh bên phải */
+    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Font to hơn, khoảng cách 2 số xa ra, không có dấu : */
     .score-pair {
       display: flex;
       align-items: center;
-      gap: 20px;
-      font-size: 72px;
+      justify-content: center;
+      gap: 220px;
+      font-size: 112px;
       font-weight: 900;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
     }
 
     .score-pink {
-      color: #ec4899;
-      text-shadow: 0 0 25px rgba(236, 72, 153, 0.95), 0 0 50px rgba(236, 72, 153, 0.7);
-      min-width: 80px;
+      color: #ff007f;
+      text-shadow: 0 0 25px #ff007f, 0 0 50px rgba(255, 0, 127, 0.95), 0 0 85px rgba(255, 0, 127, 0.65);
+      min-width: 140px;
       text-align: right;
     }
 
-    .score-divider {
-      color: #ffffff;
-      text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-      font-size: 60px;
-      opacity: 0.85;
-    }
-
     .score-blue {
-      color: #3b82f6;
-      text-shadow: 0 0 25px rgba(59, 130, 246, 0.95), 0 0 50px rgba(59, 130, 246, 0.7);
-      min-width: 80px;
+      color: #00d2ff;
+      text-shadow: 0 0 25px #00d2ff, 0 0 50px rgba(0, 210, 255, 0.95), 0 0 85px rgba(0, 210, 255, 0.65);
+      min-width: 140px;
       text-align: left;
     }
 
@@ -394,6 +394,7 @@
     // Kiểm tra nếu đang chạy trong iframe hoặc chế độ mute của Controller
     const urlParams = new URLSearchParams(window.location.search);
     const isMuted = window.self !== window.top || urlParams.get("mute") === "1";
+    const currentRoomId = (urlParams.get("roomid") || urlParams.get("roomId") || "101101").toString().trim();
 
     // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
     // Quy tắc đánh số: Vị trí trung tâm ở hàng 6 là vị trí 101; các ô còn lại là 1 - 100 (từ trái qua phải, từ trên xuống dưới)
@@ -436,6 +437,8 @@
       const dx = Math.abs(x - STAGE_CENTER_X);
       const dy = Math.abs(y - STAGE_CENTER_Y);
       const diagDist = Math.sqrt(dx * dx + (dy * 1.5) * (dy * 1.5));
+      // Phân chia dải cột chéo từ tâm ra 2 bên (0: gần tâm nhất, 7: ngoài cùng) để mỗi bên sáng chuẩn xác 2 hàng
+      const diagBand = Math.min(7, Math.max(0, Math.floor((dx - 20) / 95)));
 
       const seatObj = {
         id,
@@ -446,6 +449,7 @@
         dx,
         dy,
         diagDist,
+        diagBand,
         side
       };
       seats.push(seatObj);
@@ -554,14 +558,13 @@
       });
     }
 
-    // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s): Sóng chéo lan tỏa từ tâm ra 2 bên
+    // Hiệu ứng 1 (26s) & Hiệu ứng 2 (40s): Sóng chéo lan tỏa từ tâm ra 2 bên (Mỗi bên chỉ có 2 hàng sáng đèn)
     function runDiagonalSpreadEffect(effectNum, totalDuration, explicitServerStartTime = null) {
       resetAllSeats("black");
       const startTimestamp = explicitServerStartTime || getServerNow();
       currentEffectState = { effect: effectNum, duration: totalDuration, serverStartTime: startTimestamp };
 
       const wavePeriod = effectNum === 1 ? 2.6 : 3.2;
-      const maxDiag = 900;
 
       const audioEl = audioElements[effectNum];
       if (audioEl && !isMuted) {
@@ -590,14 +593,18 @@
         }
 
         const cycleProgress = (elapsed % wavePeriod) / wavePeriod;
-        const currentFront = cycleProgress * (maxDiag + 200);
+        // Mỗi bên có chính xác 2 hàng sáng đèn di chuyển tuần hoàn từ tâm ra ngoài
+        const band1 = Math.floor(cycleProgress * 8) % 8;
+        const band2 = (band1 + 1) % 8;
 
         seats.forEach(s => {
-          const distToWave = Math.abs(s.diagDist - currentFront);
-          const wave2Front = (((elapsed + wavePeriod * 0.5) % wavePeriod) / wavePeriod) * (maxDiag + 200);
-          const distToWave2 = Math.abs(s.diagDist - wave2Front);
-
-          if (distToWave < 120 || distToWave2 < 100) {
+          if (s.id === 101) {
+            if (band1 === 0 || band2 === 0) {
+              s.el.className = "seat is-active-lit";
+            } else {
+              s.el.className = "seat is-black";
+            }
+          } else if (s.diagBand === band1 || s.diagBand === band2) {
             s.el.className = "seat is-active-lit";
           } else {
             s.el.className = "seat is-black";
@@ -728,7 +735,6 @@
         centerStageScore.innerHTML = `
           <div class="score-pair">
             <span class="score-pink">${pinkScore}</span>
-            <span class="score-divider">:</span>
             <span class="score-blue">${blueScore}</span>
           </div>
         `;
@@ -736,7 +742,7 @@
     }
 
     // 3. Hiện tỉ số tham khảo:
-    // Đặt ở vị trí trung tâm hàng 2 (Màu hồng bên trái, Màu xanh bên phải).
+    // Đặt ở vị trí trung tâm (Màu hồng bên trái, Màu xanh bên phải).
     // Cứ 1 giây thì 2 con số sẽ đổi chỗ cho nhau (giữ nguyên màu sắc cố định: trái là Hồng, phải là Xanh).
     function showReferenceScore(scoreA = 50, scoreB = 51) {
       if (referenceSwapInterval) clearInterval(referenceSwapInterval);
@@ -750,7 +756,6 @@
         centerStageScore.innerHTML = `
           <div class="score-pair">
             <span class="score-pink">${isSwapped ? valRight : valLeft}</span>
-            <span class="score-divider">:</span>
             <span class="score-blue">${isSwapped ? valLeft : valRight}</span>
           </div>
         `;
@@ -765,7 +770,7 @@
     }
 
     // 4. Hiện tỉ số khán giả:
-    // Đặt ở trung tâm hàng 2: Màu hồng bên trái, Màu xanh bên phải (Font SFAlienEncountersSolid).
+    // Đặt ở trung tâm: Màu hồng bên trái, Màu xanh bên phải (Font SFAlienEncountersSolid).
     function showAudienceScore(pink = 0, blue = 0) {
       if (referenceSwapInterval) clearInterval(referenceSwapInterval);
 
@@ -773,7 +778,6 @@
       centerStageScore.innerHTML = `
         <div class="score-pair">
           <span class="score-pink">${pink}</span>
-          <span class="score-divider">:</span>
           <span class="score-blue">${blue}</span>
         </div>
       `;
@@ -886,7 +890,7 @@
     }
 
     // --- ĐỒNG BỘ WEBSOCKET + NTP CLOCK SYNC + BROADCASTCHANNEL ---
-    const bc = new BroadcastChannel("stage101_channel");
+    const bc = new BroadcastChannel(`stage101_channel_${currentRoomId}`);
     bc.onmessage = (e) => {
       const data = e.data;
       if (!data) return;
@@ -921,12 +925,13 @@
 
     function connectWebSocket() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${location.host}/ws`;
+      const wsUrl = `${protocol}//${location.host}/ws?roomid=${encodeURIComponent(currentRoomId)}`;
 
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("[WS] Đã kết nối Server NodeJS");
+        console.log(`[WS] Đã kết nối Server NodeJS (Phòng: ${currentRoomId})`);
+        ws.send(JSON.stringify({ type: "JOIN_ROOM", roomId: currentRoomId }));
         syncServerClock(ws);
 
         if (clockSyncTimer) clearInterval(clockSyncTimer);
@@ -1009,7 +1014,7 @@
 
     async function pollServerState() {
       try {
-        const res = await fetch("/api/state");
+        const res = await fetch(`/api/state?roomid=${encodeURIComponent(currentRoomId)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.serverTime) {
@@ -1028,6 +1033,18 @@
         }
       } catch (e) {}
     }
+
+    // Tự động căn chỉnh và scale toàn bộ sân khấu (1920x1080) vừa vặn với kích thước cửa sổ mặc định
+    function autoScaleStage() {
+      const container = document.querySelector('.scene-container');
+      if (!container) return;
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      container.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener("resize", autoScaleStage);
+    window.addEventListener("orientationchange", autoScaleStage);
+    autoScaleStage();
 
     connectWebSocket();
     resetAllSeats("white");
