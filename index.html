@@ -297,7 +297,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      gap: 20px;
       font-family: 'SFAlienEncountersSolid', 'Orbitron', 'Chakra Petch', monospace, sans-serif;
       text-shadow: 0 0 25px currentColor;
       user-select: none;
@@ -318,29 +317,38 @@
       font-weight: 900;
     }
 
-    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Font to hơn, khoảng cách 2 số xa ra, không có dấu : */
+    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Vừa vặn trong khoảng trống trung tâm, không đè lên bất kỳ ô ghế nào */
     .score-pair {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 220px;
-      font-size: 112px;
+      gap: 60px;
       font-weight: 900;
-      letter-spacing: 4px;
+      white-space: nowrap;
+    }
+
+    .score-pink-box,
+    .score-blue-box {
+      width: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .score-pink {
       color: #ff007f;
       text-shadow: 0 0 25px #ff007f, 0 0 50px rgba(255, 0, 127, 0.95), 0 0 85px rgba(255, 0, 127, 0.65);
-      min-width: 140px;
-      text-align: right;
+      text-align: center;
+      letter-spacing: 2px;
+      line-height: 1;
     }
 
     .score-blue {
       color: #00d2ff;
       text-shadow: 0 0 25px #00d2ff, 0 0 50px rgba(0, 210, 255, 0.95), 0 0 85px rgba(0, 210, 255, 0.65);
-      min-width: 140px;
-      text-align: left;
+      text-align: center;
+      letter-spacing: 2px;
+      line-height: 1;
     }
 
     /* Màn hình cảnh báo khi URL thiếu ?roomid */
@@ -771,6 +779,28 @@
       }, 35); // 35ms mỗi ô -> ~3.5s hoàn thành 101 ô
     }
 
+    // Hàm tính toán kích thước font và hiển thị tỉ số đôi không đè lên các ô
+    function getScoreFontSize(val) {
+      const str = String(val !== undefined && val !== null ? val : "");
+      if (str.length <= 2) return "104px";
+      if (str.length === 3) return "88px";
+      if (str.length === 4) return "76px";
+      return "66px"; // Khi có 5+ ký tự như 148.5
+    }
+
+    function renderScorePair(pinkVal, blueVal) {
+      return `
+        <div class="score-pair">
+          <div class="score-pink-box">
+            <span class="score-pink" style="font-size: ${getScoreFontSize(pinkVal)}">${pinkVal}</span>
+          </div>
+          <div class="score-blue-box">
+            <span class="score-blue" style="font-size: ${getScoreFontSize(blueVal)}">${blueVal}</span>
+          </div>
+        </div>
+      `;
+    }
+
     // 2. Hiện kết quả (Đối đầu):
     // Đầu tiên chạy Hiệu ứng 4 (7s, lặp 1s/vòng).
     // Sau khi kết thúc 7s, những ô tương ứng sẽ có màu hồng hoặc màu xanh dương.
@@ -797,12 +827,7 @@
         });
 
         centerStageScore.style.display = "flex";
-        centerStageScore.innerHTML = `
-          <div class="score-pair">
-            <span class="score-pink">${pinkScore}</span>
-            <span class="score-blue">${blueScore}</span>
-          </div>
-        `;
+        centerStageScore.innerHTML = renderScorePair(pinkScore, blueScore);
       });
     }
 
@@ -818,12 +843,7 @@
       let valRight = scoreB;
 
       function renderScores() {
-        centerStageScore.innerHTML = `
-          <div class="score-pair">
-            <span class="score-pink">${isSwapped ? valRight : valLeft}</span>
-            <span class="score-blue">${isSwapped ? valLeft : valRight}</span>
-          </div>
-        `;
+        centerStageScore.innerHTML = renderScorePair(isSwapped ? valRight : valLeft, isSwapped ? valLeft : valRight);
       }
 
       renderScores();
@@ -840,12 +860,7 @@
       if (referenceSwapInterval) clearInterval(referenceSwapInterval);
 
       centerStageScore.style.display = "flex";
-      centerStageScore.innerHTML = `
-        <div class="score-pair">
-          <span class="score-pink">${pink}</span>
-          <span class="score-blue">${blue}</span>
-        </div>
-      `;
+      centerStageScore.innerHTML = renderScorePair(pink, blue);
     }
 
     // 5. Hiện sự bình chọn của các giám khảo bất kỳ theo danh sách vị trí đã chọn

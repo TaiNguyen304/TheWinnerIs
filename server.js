@@ -378,21 +378,33 @@ async function startServer() {
             if (v === "XANH") blueCount++;
           });
 
-          const isManualPink = data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "";
-          const isManualBlue = data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "";
-
-          const judgePink = isManualPink ? Number(data.pinkScore) : pinkCount;
-          const judgeBlue = isManualBlue ? Number(data.blueScore) : blueCount;
-
-          let votesToUse = { ...roomState.voting.votes };
-          if (isManualPink || isManualBlue) {
-            votesToUse = data.votes || generateRandomVersusVotes(judgePink, judgeBlue);
+          // Lấy điểm ban giám khảo (judgePink & judgeBlue)
+          let judgePink = pinkCount;
+          let judgeBlue = blueCount;
+          if (data.judgePinkScore !== undefined && data.judgePinkScore !== null && data.judgePinkScore !== "") {
+            judgePink = Number(data.judgePinkScore);
+          } else if (data.pinkScore !== undefined && data.pinkScore !== null && data.pinkScore !== "") {
+            judgePink = Number(data.pinkScore);
           }
 
-          const audPink = (roomState.audienceScore && typeof roomState.audienceScore.pink === "number") ? roomState.audienceScore.pink : 0;
-          const audBlue = (roomState.audienceScore && typeof roomState.audienceScore.blue === "number") ? roomState.audienceScore.blue : 0;
+          if (data.judgeBlueScore !== undefined && data.judgeBlueScore !== null && data.judgeBlueScore !== "") {
+            judgeBlue = Number(data.judgeBlueScore);
+          } else if (data.blueScore !== undefined && data.blueScore !== null && data.blueScore !== "") {
+            judgeBlue = Number(data.blueScore);
+          }
 
-          // Nếu tỉ số khán giả khác 0 - 0 thì cộng vào tỉ số từ Judge, nếu 0 - 0 thì chỉ lấy tỉ số Judge
+          let votesToUse = { ...roomState.voting.votes };
+          if (data.votes) {
+            votesToUse = data.votes;
+          } else if (judgePink !== pinkCount || judgeBlue !== blueCount) {
+            votesToUse = generateRandomVersusVotes(judgePink, judgeBlue);
+          }
+
+          // Lấy điểm khán giả (Chỉ cộng đúng 1 lần - không nhân 2)
+          const audPink = (roomState.audienceScore && typeof roomState.audienceScore.pink === "number") ? roomState.audienceScore.pink : (data.audiencePinkScore !== undefined ? Number(data.audiencePinkScore) : 0);
+          const audBlue = (roomState.audienceScore && typeof roomState.audienceScore.blue === "number") ? roomState.audienceScore.blue : (data.audienceBlueScore !== undefined ? Number(data.audienceBlueScore) : 0);
+
+          // Nếu client đã tính sẵn finalScore (data.pinkScore khi có kèm data.judgePinkScore) thì ưu tiên dùng
           let finalPinkScore = judgePink;
           let finalBlueScore = judgeBlue;
           if (audPink !== 0 || audBlue !== 0) {
@@ -840,19 +852,29 @@ async function startServer() {
       if (v === "XANH") blueCount++;
     });
 
-    const isManualPink = req.body && req.body.pinkScore !== undefined && req.body.pinkScore !== null && req.body.pinkScore !== "";
-    const isManualBlue = req.body && req.body.blueScore !== undefined && req.body.blueScore !== null && req.body.blueScore !== "";
-
-    const judgePink = isManualPink ? Number(req.body.pinkScore) : pinkCount;
-    const judgeBlue = isManualBlue ? Number(req.body.blueScore) : blueCount;
-
-    let votesToUse = { ...roomState.voting.votes };
-    if (isManualPink || isManualBlue) {
-      votesToUse = req.body.votes || generateRandomVersusVotes(judgePink, judgeBlue);
+    let judgePink = pinkCount;
+    let judgeBlue = blueCount;
+    if (req.body && req.body.judgePinkScore !== undefined && req.body.judgePinkScore !== null && req.body.judgePinkScore !== "") {
+      judgePink = Number(req.body.judgePinkScore);
+    } else if (req.body && req.body.pinkScore !== undefined && req.body.pinkScore !== null && req.body.pinkScore !== "") {
+      judgePink = Number(req.body.pinkScore);
     }
 
-    const audPink = (roomState.audienceScore && typeof roomState.audienceScore.pink === "number") ? roomState.audienceScore.pink : 0;
-    const audBlue = (roomState.audienceScore && typeof roomState.audienceScore.blue === "number") ? roomState.audienceScore.blue : 0;
+    if (req.body && req.body.judgeBlueScore !== undefined && req.body.judgeBlueScore !== null && req.body.judgeBlueScore !== "") {
+      judgeBlue = Number(req.body.judgeBlueScore);
+    } else if (req.body && req.body.blueScore !== undefined && req.body.blueScore !== null && req.body.blueScore !== "") {
+      judgeBlue = Number(req.body.blueScore);
+    }
+
+    let votesToUse = { ...roomState.voting.votes };
+    if (req.body && req.body.votes) {
+      votesToUse = req.body.votes;
+    } else if (judgePink !== pinkCount || judgeBlue !== blueCount) {
+      votesToUse = generateRandomVersusVotes(judgePink, judgeBlue);
+    }
+
+    const audPink = (roomState.audienceScore && typeof roomState.audienceScore.pink === "number") ? roomState.audienceScore.pink : (req.body && req.body.audiencePinkScore !== undefined ? Number(req.body.audiencePinkScore) : 0);
+    const audBlue = (roomState.audienceScore && typeof roomState.audienceScore.blue === "number") ? roomState.audienceScore.blue : (req.body && req.body.audienceBlueScore !== undefined ? Number(req.body.audienceBlueScore) : 0);
 
     let finalPinkScore = judgePink;
     let finalBlueScore = judgeBlue;
