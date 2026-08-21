@@ -903,11 +903,11 @@
       <div class="modal-inputs">
         <div class="modal-input-group">
           <label class="pink">💖 Màu hồng (Bên trái):</label>
-          <input type="number" step="0.1" class="modal-input pink" id="inputPinkScore" value="0" min="0" max="100" />
+          <input type="number" step="0.1" class="modal-input pink" id="inputPinkScore" value="0" placeholder="Nhập điểm Hồng..." onkeydown="if(event.key==='Enter') saveAudienceScore()" oninput="hideAudienceModalError()" />
         </div>
         <div class="modal-input-group">
           <label class="blue">🔷 Màu xanh (Bên phải):</label>
-          <input type="number" step="0.1" class="modal-input blue" id="inputBlueScore" value="0" min="0" max="100" />
+          <input type="number" step="0.1" class="modal-input blue" id="inputBlueScore" value="0" placeholder="Nhập điểm Xanh..." onkeydown="if(event.key==='Enter') saveAudienceScore()" oninput="hideAudienceModalError()" />
         </div>
       </div>
       <div id="audienceModalError" style="display:none; font-size: 12px; color: #f87171; text-align: center; font-weight: 800; background: rgba(239, 68, 68, 0.15); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);"></div>
@@ -1721,6 +1721,14 @@
 
     function closeAudienceModal() {
       audienceModal.style.display = "none";
+    }
+
+    function hideAudienceModalError() {
+      const errorEl = document.getElementById("audienceModalError");
+      if (errorEl) {
+        errorEl.style.display = "none";
+        errorEl.textContent = "";
+      }
     }
 
     function saveAudienceScore() {
