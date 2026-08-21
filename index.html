@@ -285,12 +285,11 @@
       z-index: 12;
     }
 
-    /* VỊ TRÍ TRUNG TÂM HIỂN THỊ TỈ SỐ VÀ SỐ ĐIỂM (Cao hơn hàng 1 một chút) */
-    /* Hàng 1 có y = 186px -> Điểm/Tỉ số đặt ở y = 168px */
+    /* VỊ TRÍ TRUNG TÂM HIỂN THỊ TỈ SỐ VÀ SỐ ĐIỂM (Khoảng trống trung tâm phía trên) */
     .center-stage-score {
       position: absolute;
       left: 960px;
-      top: 168px;
+      top: 175px;
       transform: translate(-50%, -50%);
       z-index: 25;
       pointer-events: none;
@@ -304,51 +303,44 @@
     }
 
     @keyframes popIn {
-      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
       100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
 
     /* Số điểm (Hiện kết quả thường): Font to hơn, đặt cao hơn hàng đầu */
     .score-single-number {
-      font-size: 118px;
+      font-size: 98px;
       color: #22c55e;
       text-shadow: 0 0 25px rgba(34, 197, 94, 0.95), 0 0 55px rgba(34, 197, 94, 0.8), 0 0 90px rgba(34, 197, 94, 0.5);
-      letter-spacing: 4px;
+      letter-spacing: 2px;
       font-weight: 900;
+      line-height: 1;
     }
 
-    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Vừa vặn trong khoảng trống trung tâm, không đè lên bất kỳ ô ghế nào */
+    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Vừa vặn trong khoảng trống trung tâm, hoàn toàn không đè lên bất kỳ ô ghế nào */
     .score-pair {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 60px;
+      gap: 32px;
       font-weight: 900;
       white-space: nowrap;
-    }
-
-    .score-pink-box,
-    .score-blue-box {
-      width: 260px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .score-pink {
       color: #ff007f;
       text-shadow: 0 0 25px #ff007f, 0 0 50px rgba(255, 0, 127, 0.95), 0 0 85px rgba(255, 0, 127, 0.65);
-      text-align: center;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       line-height: 1;
+      display: inline-block;
     }
 
     .score-blue {
       color: #00d2ff;
       text-shadow: 0 0 25px #00d2ff, 0 0 50px rgba(0, 210, 255, 0.95), 0 0 85px rgba(0, 210, 255, 0.65);
-      text-align: center;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       line-height: 1;
+      display: inline-block;
     }
 
     /* Màn hình cảnh báo khi URL thiếu ?roomid */
@@ -443,13 +435,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isMuted = urlParams.get("mute") === "1";
     const rawRoomId = urlParams.get("roomid") || urlParams.get("roomId");
-    const hasRoomId = rawRoomId !== null && rawRoomId.trim().length > 0;
-    const currentRoomId = hasRoomId ? rawRoomId.trim() : null;
-
-    if (!hasRoomId) {
-      const warningEl = document.getElementById("noRoomWarning");
-      if (warningEl) warningEl.style.display = "flex";
-    }
+    const currentRoomId = (rawRoomId && rawRoomId.trim().length > 0) ? rawRoomId.trim() : "101101";
 
     // Cơ chế mở khóa Audio tự động ngay khi tương tác trang
     let audioUnlocked = false;
@@ -779,24 +765,19 @@
       }, 35); // 35ms mỗi ô -> ~3.5s hoàn thành 101 ô
     }
 
-    // Hàm tính toán kích thước font và hiển thị tỉ số đôi không đè lên các ô
+    // Hàm tính toán kích thước font và hiển thị tỉ số đôi nằm gọn tại trung tâm
     function getScoreFontSize(val) {
       const str = String(val !== undefined && val !== null ? val : "");
-      if (str.length <= 2) return "104px";
-      if (str.length === 3) return "88px";
-      if (str.length === 4) return "76px";
-      return "66px"; // Khi có 5+ ký tự như 148.5
+      if (str.length <= 2) return "86px";
+      if (str.length <= 4) return "76px";
+      return "68px"; // Khi có 5+ ký tự như 118.3, 148.5
     }
 
     function renderScorePair(pinkVal, blueVal) {
       return `
         <div class="score-pair">
-          <div class="score-pink-box">
-            <span class="score-pink" style="font-size: ${getScoreFontSize(pinkVal)}">${pinkVal}</span>
-          </div>
-          <div class="score-blue-box">
-            <span class="score-blue" style="font-size: ${getScoreFontSize(blueVal)}">${blueVal}</span>
-          </div>
+          <span class="score-pink" style="font-size: ${getScoreFontSize(pinkVal)}">${pinkVal}</span>
+          <span class="score-blue" style="font-size: ${getScoreFontSize(blueVal)}">${blueVal}</span>
         </div>
       `;
     }
@@ -980,7 +961,7 @@
 
     // --- ĐỒNG BỘ WEBSOCKET + NTP CLOCK SYNC + BROADCASTCHANNEL ---
     let bc = null;
-    if (hasRoomId) {
+    if (currentRoomId) {
       bc = new BroadcastChannel(`stage101_channel_${currentRoomId}`);
       bc.onmessage = (e) => {
         const data = e.data;
@@ -1016,7 +997,7 @@
     let fallbackPollTimer = null;
 
     function connectWebSocket() {
-      if (!hasRoomId) return;
+      if (!currentRoomId) return;
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}/ws?roomid=${encodeURIComponent(currentRoomId)}`;
 
