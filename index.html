@@ -431,9 +431,9 @@
       4: document.getElementById("audioResult")
     };
 
-    // Kiểm tra nếu đang chạy trong iframe hoặc chế độ mute của Controller
+    // Kiểm tra nếu đang chạy trong chế độ mute của Controller (truyền ?mute=1)
     const urlParams = new URLSearchParams(window.location.search);
-    const isMuted = window.self !== window.top || urlParams.get("mute") === "1";
+    const isMuted = urlParams.get("mute") === "1";
     const rawRoomId = urlParams.get("roomid") || urlParams.get("roomId");
     const hasRoomId = rawRoomId !== null && rawRoomId.trim().length > 0;
     const currentRoomId = hasRoomId ? rawRoomId.trim() : null;
@@ -442,6 +442,31 @@
       const warningEl = document.getElementById("noRoomWarning");
       if (warningEl) warningEl.style.display = "flex";
     }
+
+    // Cơ chế mở khóa Audio tự động ngay khi tương tác trang
+    let audioUnlocked = false;
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      Object.values(audioElements).forEach(audio => {
+        if (audio) {
+          const prevMuted = audio.muted;
+          audio.muted = true;
+          audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = prevMuted;
+          }).catch(() => {
+            audio.muted = prevMuted;
+          });
+        }
+      });
+    }
+
+    window.addEventListener("click", unlockAudio, { passive: true });
+    window.addEventListener("touchstart", unlockAudio, { passive: true });
+    window.addEventListener("keydown", unlockAudio, { passive: true });
+    window.addEventListener("pointerdown", unlockAudio, { passive: true });
 
     // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
     // Quy tắc đánh số: Vị trí trung tâm ở hàng 6 là vị trí 101; các ô còn lại là 1 - 100 (từ trái qua phải, từ trên xuống dưới)
@@ -531,13 +556,16 @@
     console.log(`Đã khởi tạo thành công ${seats.length} ô khán giả (ID từ 1 đến 101).`);
 
     // --- HỆ THỐNG ÂM THANH SÂN KHẤU (CHỈ 4 FILE ĐÃ ĐỊNH NGHĨA) ---
-    function playAudio(effectNum) {
+    function playAudio(effectNum, explicitStartTime = 0) {
       if (isMuted) return;
       stopAllAudio();
       const audioEl = audioElements[effectNum];
 
       if (audioEl) {
-        audioEl.currentTime = 0;
+        const startTime = Math.max(0, explicitStartTime);
+        try {
+          audioEl.currentTime = startTime;
+        } catch (e) {}
         const playPromise = audioEl.play();
         if (playPromise !== undefined) {
           playPromise.catch(err => {
@@ -551,7 +579,9 @@
       Object.values(audioElements).forEach(audio => {
         if (audio) {
           audio.pause();
-          audio.currentTime = 0;
+          try {
+            audio.currentTime = 0;
+          } catch (e) {}
         }
       });
     }
@@ -613,15 +643,6 @@
 
       const wavePeriod = effectNum === 1 ? 2.6 : 3.2;
 
-      const audioEl = audioElements[effectNum];
-      if (audioEl && !isMuted) {
-        const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
-        if (currentElapsed < totalDuration) {
-          audioEl.currentTime = currentElapsed;
-          audioEl.play().catch(() => {});
-        }
-      }
-
       function animate() {
         const now = getServerNow();
         const elapsed = (now - startTimestamp) / 1000;
@@ -671,15 +692,6 @@
       currentEffectState = { effect: effectNum, duration: totalDuration, loopDuration, serverStartTime: startTimestamp };
 
       const totalLoops = Math.round(totalDuration / loopDuration);
-
-      const audioEl = audioElements[effectNum];
-      if (audioEl && !isMuted) {
-        const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
-        if (currentElapsed < totalDuration) {
-          audioEl.currentTime = currentElapsed;
-          audioEl.play().catch(() => {});
-        }
-      }
 
       function animate() {
         const now = getServerNow();
@@ -763,13 +775,15 @@
     // Đầu tiên chạy Hiệu ứng 4 (7s, lặp 1s/vòng).
     // Sau khi kết thúc 7s, những ô tương ứng sẽ có màu hồng hoặc màu xanh dương.
     // Hiển thị tỉ số ở trung tâm hàng 2 (font SFAlienEncountersSolid): Màu hồng bên trái, Màu xanh bên phải.
-    function showVersusResult(votes = {}, pinkScore = 0, blueScore = 0) {
+    function showVersusResult(votes = {}, pinkScore = 0, blueScore = 0, explicitServerStartTime = null) {
       if (referenceSwapInterval) {
         clearInterval(referenceSwapInterval);
         referenceSwapInterval = null;
       }
-      playAudio(4);
-      runHorizontalScanEffect(4, 7, 1.0, getServerNow(), () => {
+      const startTimestamp = explicitServerStartTime || getServerNow();
+      const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
+      playAudio(4, currentElapsed);
+      runHorizontalScanEffect(4, 7, 1.0, startTimestamp, () => {
         // Sau khi kết thúc 7 giây -> Hiển thị màu ghế và tỉ số
         seats.forEach(s => {
           const vote = votes[s.id];
@@ -929,7 +943,9 @@
     // Bộ kích hoạt hiệu ứng đồng bộ tuyệt đối
     function triggerEffect(effectNum, explicitServerStartTime = null) {
       console.log(`[Stage] Đồng bộ Hiệu ứng: ${effectNum} (ServerTime: ${explicitServerStartTime || getServerNow()})`);
-      playAudio(effectNum);
+      const startTimestamp = explicitServerStartTime || getServerNow();
+      const currentElapsed = Math.max(0, (getServerNow() - startTimestamp) / 1000);
+      playAudio(effectNum, currentElapsed);
 
       if (effectNum === 1) {
         runDiagonalSpreadEffect(1, 26, explicitServerStartTime);
@@ -961,7 +977,7 @@
         } else if (data.type === "SHOW_NORMAL_RESULT") {
           showNormalResult(data.votes);
         } else if (data.type === "SHOW_VERSUS_RESULT") {
-          showVersusResult(data.votes, data.pinkScore, data.blueScore);
+          showVersusResult(data.votes, data.pinkScore, data.blueScore, data.serverStartTime);
         } else if (data.type === "SHOW_REFERENCE_SCORE") {
           showReferenceScore(data.scoreA, data.scoreB);
         } else if (data.type === "SHOW_AUDIENCE_SCORE") {
@@ -1028,7 +1044,7 @@
           } else if (msg.type === "SHOW_NORMAL_RESULT" && msg.payload) {
             showNormalResult(msg.payload.votes);
           } else if (msg.type === "SHOW_VERSUS_RESULT" && msg.payload) {
-            showVersusResult(msg.payload.votes, msg.payload.pinkScore, msg.payload.blueScore);
+            showVersusResult(msg.payload.votes, msg.payload.pinkScore, msg.payload.blueScore, msg.payload.serverStartTime);
           } else if (msg.type === "SHOW_REFERENCE_SCORE" && msg.payload) {
             showReferenceScore(msg.payload.scoreA, msg.payload.scoreB);
           } else if (msg.type === "SHOW_AUDIENCE_SCORE" && msg.payload) {
@@ -1052,7 +1068,7 @@
             } else if (msg.state.stageDisplay && msg.state.stageDisplay.type !== "IDLE") {
               const sd = msg.state.stageDisplay;
               if (sd.type === "NORMAL_RESULT") showNormalResult(sd.votes);
-              else if (sd.type === "VERSUS_RESULT") showVersusResult(sd.votes, sd.pinkScore, sd.blueScore);
+              else if (sd.type === "VERSUS_RESULT") showVersusResult(sd.votes, sd.pinkScore, sd.blueScore, sd.serverStartTime);
               else if (sd.type === "REFERENCE_SCORE") showReferenceScore(sd.scoreA, sd.scoreB);
               else if (sd.type === "AUDIENCE_SCORE") showAudienceScore(sd.pink, sd.blue);
               else if (sd.type === "SPECIFIC_JUDGES") showSpecificJudges(sd.judgeIds, sd.votes);
