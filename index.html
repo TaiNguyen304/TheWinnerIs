@@ -317,22 +317,14 @@
       line-height: 1;
     }
 
-    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Phân bố cân đối sang 2 bên, cách ô ghế gần nhất 1 khoảng nhỏ an toàn */
+    /* Tỉ số đối đầu / tỉ số khán giả / tham khảo: Phân bố rộng 2 bên, cách mép ghế 1 khoảng vừa vặn, 2 số tách biệt rõ ràng */
     .score-pair {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      width: 760px;
+      width: 600px;
       font-weight: 900;
       white-space: nowrap;
-    }
-
-    .score-pink-box,
-    .score-blue-box {
-      width: 280px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .score-pink {
@@ -340,7 +332,7 @@
       text-shadow: 0 0 25px #ff007f, 0 0 50px rgba(255, 0, 127, 0.95), 0 0 85px rgba(255, 0, 127, 0.65);
       letter-spacing: 2px;
       line-height: 1;
-      text-align: center;
+      text-align: left;
     }
 
     .score-blue {
@@ -348,7 +340,7 @@
       text-shadow: 0 0 25px #00d2ff, 0 0 50px rgba(0, 210, 255, 0.95), 0 0 85px rgba(0, 210, 255, 0.65);
       letter-spacing: 2px;
       line-height: 1;
-      text-align: center;
+      text-align: right;
     }
 
     /* Màn hình cảnh báo khi URL thiếu ?roomid */
@@ -776,20 +768,16 @@
     // Hàm tính toán kích thước font và hiển thị tỉ số đôi phân bố sang 2 bên
     function getScoreFontSize(val) {
       const str = String(val !== undefined && val !== null ? val : "");
-      if (str.length <= 2) return "92px";
-      if (str.length <= 4) return "80px";
-      return "70px"; // Khi có 5+ ký tự như 118.3, 148.5
+      if (str.length <= 2) return "96px";
+      if (str.length <= 4) return "84px";
+      return "76px"; // Khi có 5+ ký tự như 123.7, 148.5
     }
 
     function renderScorePair(pinkVal, blueVal) {
       return `
         <div class="score-pair">
-          <div class="score-pink-box">
-            <span class="score-pink" style="font-size: ${getScoreFontSize(pinkVal)}">${pinkVal}</span>
-          </div>
-          <div class="score-blue-box">
-            <span class="score-blue" style="font-size: ${getScoreFontSize(blueVal)}">${blueVal}</span>
-          </div>
+          <span class="score-pink" style="font-size: ${getScoreFontSize(pinkVal)}">${pinkVal}</span>
+          <span class="score-blue" style="font-size: ${getScoreFontSize(blueVal)}">${blueVal}</span>
         </div>
       `;
     }
