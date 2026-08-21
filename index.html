@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
   <style>
     @font-face {
       font-family: 'SFAlienEncountersSolid';
@@ -21,6 +22,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-weight: bold !important;
     }
     html, body {
       width: 100%;
@@ -341,10 +343,48 @@
       text-align: left;
     }
 
+    /* Màn hình cảnh báo khi URL thiếu ?roomid */
+    .no-room-warning {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 7, 42, 0.97);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(12px);
+    }
+    .no-room-card {
+      background: #0d143a;
+      border: 2px solid #ef4444;
+      box-shadow: 0 0 45px rgba(239, 68, 68, 0.4), inset 0 0 25px rgba(239, 68, 68, 0.2);
+      border-radius: 18px;
+      padding: 36px 44px;
+      text-align: center;
+      max-width: 620px;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .no-room-icon { font-size: 52px; margin-bottom: 12px; }
+    .no-room-title { font-size: 22px; font-weight: 900; color: #f87171; letter-spacing: 2px; margin-bottom: 10px; }
+    .no-room-desc { font-size: 20px; font-weight: 900 !important; color: #f1f5f9; margin-bottom: 12px; }
+    .no-room-desc .highlight { color: #facc15; font-weight: 900 !important; background: rgba(250, 204, 21, 0.15); padding: 3px 10px; border-radius: 6px; border: 1px solid rgba(250, 204, 21, 0.4); }
+    .no-room-sub { font-size: 15px; font-weight: 800 !important; color: #94a3b8; margin-top: 8px; }
+    .no-room-sub code { background: #050b24; padding: 4px 10px; border-radius: 6px; color: #38bdf8; font-family: monospace; font-weight: 900 !important; font-size: 15px; }
   </style>
 </head>
 
 <body>
+  <!-- Cảnh báo khi URL thiếu ?roomid (Không dùng alert/prompt/confirm) -->
+  <div id="noRoomWarning" class="no-room-warning">
+    <div class="no-room-card">
+      <div class="no-room-icon">⚠️</div>
+      <div class="no-room-title">THIẾU THAM SỐ PHÒNG</div>
+      <div class="no-room-desc">Vui lòng nhập <span class="highlight">?roomid=Mã phòng</span> lên URL</div>
+      <div class="no-room-sub">Ví dụ: <code>index.html?roomid=123456</code></div>
+    </div>
+  </div>
+
   <div class="scene-container" id="sceneContainer">
     <!-- Ánh sáng mờ 2 cánh -->
     <div class="glow left"></div>
@@ -394,7 +434,14 @@
     // Kiểm tra nếu đang chạy trong iframe hoặc chế độ mute của Controller
     const urlParams = new URLSearchParams(window.location.search);
     const isMuted = window.self !== window.top || urlParams.get("mute") === "1";
-    const currentRoomId = (urlParams.get("roomid") || urlParams.get("roomId") || "101101").toString().trim();
+    const rawRoomId = urlParams.get("roomid") || urlParams.get("roomId");
+    const hasRoomId = rawRoomId !== null && rawRoomId.trim().length > 0;
+    const currentRoomId = hasRoomId ? rawRoomId.trim() : null;
+
+    if (!hasRoomId) {
+      const warningEl = document.getElementById("noRoomWarning");
+      if (warningEl) warningEl.style.display = "flex";
+    }
 
     // Định nghĩa 10 hàng theo tọa độ ảnh tham chiếu 1920x1080
     // Quy tắc đánh số: Vị trí trung tâm ở hàng 6 là vị trí 101; các ô còn lại là 1 - 100 (từ trái qua phải, từ trên xuống dưới)
@@ -717,6 +764,10 @@
     // Sau khi kết thúc 7s, những ô tương ứng sẽ có màu hồng hoặc màu xanh dương.
     // Hiển thị tỉ số ở trung tâm hàng 2 (font SFAlienEncountersSolid): Màu hồng bên trái, Màu xanh bên phải.
     function showVersusResult(votes = {}, pinkScore = 0, blueScore = 0) {
+      if (referenceSwapInterval) {
+        clearInterval(referenceSwapInterval);
+        referenceSwapInterval = null;
+      }
       playAudio(4);
       runHorizontalScanEffect(4, 7, 1.0, getServerNow(), () => {
         // Sau khi kết thúc 7 giây -> Hiển thị màu ghế và tỉ số
@@ -784,14 +835,11 @@
     }
 
     // 5. Hiện sự bình chọn của các giám khảo bất kỳ theo danh sách vị trí đã chọn
+    // LƯU Ý: Không tắt tính năng đổi chỗ 2 con số ở tỉ số tham khảo nếu chưa hiện kết quả đối đầu!
     function showSpecificJudges(judgeIds = [], votes = {}) {
       if (currentAnimationId) {
         cancelAnimationFrame(currentAnimationId);
         currentAnimationId = null;
-      }
-      if (referenceSwapInterval) {
-        clearInterval(referenceSwapInterval);
-        referenceSwapInterval = null;
       }
       if (sequentialRevealTimer) {
         clearInterval(sequentialRevealTimer);
@@ -890,40 +938,44 @@
     }
 
     // --- ĐỒNG BỘ WEBSOCKET + NTP CLOCK SYNC + BROADCASTCHANNEL ---
-    const bc = new BroadcastChannel(`stage101_channel_${currentRoomId}`);
-    bc.onmessage = (e) => {
-      const data = e.data;
-      if (!data) return;
-      if (data.type === "TRIGGER_EFFECT") {
-        triggerEffect(Number(data.effect), data.serverStartTime);
-      } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
-        stopEffect();
-      } else if (data.type === "SHOW_NORMAL_RESULT") {
-        showNormalResult(data.votes);
-      } else if (data.type === "SHOW_VERSUS_RESULT") {
-        showVersusResult(data.votes, data.pinkScore, data.blueScore);
-      } else if (data.type === "SHOW_REFERENCE_SCORE") {
-        showReferenceScore(data.scoreA, data.scoreB);
-      } else if (data.type === "SHOW_AUDIENCE_SCORE") {
-        showAudienceScore(data.pink, data.blue);
-      } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
-        showSpecificJudges(data.judgeIds, data.votes);
-      } else if (data.type === "RESET_SCORE") {
-        resetStageScore();
-      } else if (data.type === "RESET_REFERENCE_SCORE") {
-        resetReferenceScore();
-      } else if (data.type === "RESET_AUDIENCE_SCORE") {
-        resetAudienceScore();
-      } else if (data.type === "CLEAR_STAGE_DISPLAY") {
-        resetAllSeats("white");
-      }
-    };
+    let bc = null;
+    if (hasRoomId) {
+      bc = new BroadcastChannel(`stage101_channel_${currentRoomId}`);
+      bc.onmessage = (e) => {
+        const data = e.data;
+        if (!data) return;
+        if (data.type === "TRIGGER_EFFECT") {
+          triggerEffect(Number(data.effect), data.serverStartTime);
+        } else if (data.type === "STOP_EFFECT" || data.type === "RESET") {
+          stopEffect();
+        } else if (data.type === "SHOW_NORMAL_RESULT") {
+          showNormalResult(data.votes);
+        } else if (data.type === "SHOW_VERSUS_RESULT") {
+          showVersusResult(data.votes, data.pinkScore, data.blueScore);
+        } else if (data.type === "SHOW_REFERENCE_SCORE") {
+          showReferenceScore(data.scoreA, data.scoreB);
+        } else if (data.type === "SHOW_AUDIENCE_SCORE") {
+          showAudienceScore(data.pink, data.blue);
+        } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
+          showSpecificJudges(data.judgeIds, data.votes);
+        } else if (data.type === "RESET_SCORE") {
+          resetStageScore();
+        } else if (data.type === "RESET_REFERENCE_SCORE") {
+          resetReferenceScore();
+        } else if (data.type === "RESET_AUDIENCE_SCORE") {
+          resetAudienceScore();
+        } else if (data.type === "CLEAR_STAGE_DISPLAY") {
+          resetAllSeats("white");
+        }
+      };
+    }
 
     let ws = null;
     let clockSyncTimer = null;
     let fallbackPollTimer = null;
 
     function connectWebSocket() {
+      if (!hasRoomId) return;
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}/ws?roomid=${encodeURIComponent(currentRoomId)}`;
 

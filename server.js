@@ -405,10 +405,24 @@ async function startServer() {
         } else if (data.type === "SHOW_SPECIFIC_JUDGES") {
           const serverNow = Date.now();
           const judgeIds = Array.isArray(data.judgeIds) ? data.judgeIds : [];
+          
+          let votesToUse = data.votes && Object.keys(data.votes).length > 0 ? { ...data.votes } : { ...roomState.voting.votes };
+          if (Object.keys(votesToUse).length === 0) {
+            if (roomState.manualScores.normal !== "") {
+              votesToUse = generateRandomNormalVotes(Number(roomState.manualScores.normal) || 0);
+            } else if (roomState.manualScores.versusPink !== "" || roomState.manualScores.versusBlue !== "") {
+              votesToUse = generateRandomVersusVotes(
+                Number(roomState.manualScores.versusPink) || 0,
+                Number(roomState.manualScores.versusBlue) || 0
+              );
+            }
+            roomState.voting.votes = { ...votesToUse };
+          }
+
           roomState.stageDisplay = {
             type: "SPECIFIC_JUDGES",
             judgeIds,
-            votes: { ...roomState.voting.votes },
+            votes: votesToUse,
             serverStartTime: serverNow,
             timestamp: serverNow,
           };
@@ -458,9 +472,22 @@ async function startServer() {
           if (data.normal !== undefined) roomState.manualScores.normal = data.normal;
           if (data.versusPink !== undefined) roomState.manualScores.versusPink = data.versusPink;
           if (data.versusBlue !== undefined) roomState.manualScores.versusBlue = data.versusBlue;
+
+          if (data.votes && Object.keys(data.votes).length > 0) {
+            roomState.voting.votes = { ...data.votes };
+          } else if (data.normal !== undefined && data.normal !== "") {
+            roomState.voting.votes = generateRandomNormalVotes(Number(data.normal) || 0);
+          } else if ((data.versusPink !== undefined && data.versusPink !== "") || (data.versusBlue !== undefined && data.versusBlue !== "")) {
+            roomState.voting.votes = generateRandomVersusVotes(
+              Number(roomState.manualScores.versusPink) || 0,
+              Number(roomState.manualScores.versusBlue) || 0
+            );
+          }
+
           broadcastToRoom(roomId, {
             type: "MANUAL_SCORES_UPDATED",
             manualScores: roomState.manualScores,
+            voting: roomState.voting,
             serverTime: Date.now(),
           });
         } else if (data.type === "RESET_AUDIENCE_SCORE") {
@@ -820,10 +847,24 @@ async function startServer() {
     const roomState = getOrCreateRoom(roomId);
     const serverNow = Date.now();
     const judgeIds = Array.isArray(req.body.judgeIds) ? req.body.judgeIds : [];
+    
+    let votesToUse = req.body.votes && Object.keys(req.body.votes).length > 0 ? { ...req.body.votes } : { ...roomState.voting.votes };
+    if (Object.keys(votesToUse).length === 0) {
+      if (roomState.manualScores.normal !== "") {
+        votesToUse = generateRandomNormalVotes(Number(roomState.manualScores.normal) || 0);
+      } else if (roomState.manualScores.versusPink !== "" || roomState.manualScores.versusBlue !== "") {
+        votesToUse = generateRandomVersusVotes(
+          Number(roomState.manualScores.versusPink) || 0,
+          Number(roomState.manualScores.versusBlue) || 0
+        );
+      }
+      roomState.voting.votes = { ...votesToUse };
+    }
+
     roomState.stageDisplay = {
       type: "SPECIFIC_JUDGES",
       judgeIds,
-      votes: { ...roomState.voting.votes },
+      votes: votesToUse,
       serverStartTime: serverNow,
       timestamp: serverNow,
     };
@@ -892,13 +933,25 @@ async function startServer() {
       if (req.body.normal !== undefined) roomState.manualScores.normal = req.body.normal;
       if (req.body.versusPink !== undefined) roomState.manualScores.versusPink = req.body.versusPink;
       if (req.body.versusBlue !== undefined) roomState.manualScores.versusBlue = req.body.versusBlue;
+
+      if (req.body.votes && Object.keys(req.body.votes).length > 0) {
+        roomState.voting.votes = { ...req.body.votes };
+      } else if (req.body.normal !== undefined && req.body.normal !== "") {
+        roomState.voting.votes = generateRandomNormalVotes(Number(req.body.normal) || 0);
+      } else if ((req.body.versusPink !== undefined && req.body.versusPink !== "") || (req.body.versusBlue !== undefined && req.body.versusBlue !== "")) {
+        roomState.voting.votes = generateRandomVersusVotes(
+          Number(roomState.manualScores.versusPink) || 0,
+          Number(roomState.manualScores.versusBlue) || 0
+        );
+      }
     }
     broadcastToRoom(roomId, {
       type: "MANUAL_SCORES_UPDATED",
       manualScores: roomState.manualScores,
+      voting: roomState.voting,
       serverTime: Date.now(),
     });
-    res.json({ success: true, manualScores: roomState.manualScores });
+    res.json({ success: true, manualScores: roomState.manualScores, voting: roomState.voting });
   });
 
   // REST API: Reset tỉ số Khán giả
